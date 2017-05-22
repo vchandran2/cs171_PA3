@@ -72,6 +72,7 @@ class Paxos():
                 conn.setblocking(0)
                 incomingTCP[sender] = conn
             line = f.readline()
+        // practicing
         if (self.ID == 1):
             self.ballotNum[0] = 1
             self.ballotNum[1] = self.ID
