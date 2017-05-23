@@ -10,6 +10,8 @@ class Paxos():
         self.index = index
         self.ballotNum = [0, 0]
         self.acceptNum = [0, 0]
+        self.outgoingTCP = {}
+        self.incomingTCP = {}
         self.val = None
         self.ID = ID
 
@@ -48,8 +50,6 @@ class Paxos():
         print('trying to bind to ' + str(TCP_IP) + ', ' + str(TCP_PORT))
         s.bind((TCP_IP, TCP_PORT))
         s.listen(1)
-        incomingTCP = {}
-        outgoingTCP = {}
         line = f.readline()
         while (line != ""):
             line = line.strip().split()
@@ -63,7 +63,7 @@ class Paxos():
                         TCP_PORT = int(TCP[1])
                         n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         n.connect((TCP_IP, TCP_PORT))
-                        outgoingTCP[recvr] = n
+                        self.outgoingTCP[recvr] = n
                         print('connected to ' + str(recvr))
                         break
                     except socket.error:
@@ -71,26 +71,20 @@ class Paxos():
             elif (self.ID == recvr):
                 conn, addr = s.accept()
                 conn.setblocking(0)
-                incomingTCP[sender] = conn
+                self.incomingTCP[sender] = conn
             line = f.readline()
         # practicing just sending message from ID 1 to all others
         if (self.ID == 1):
             self.ballotNum[0] = 1
             self.ballotNum[1] = self.ID
-            for out in outgoingTCP:
-                outgoingTCP.get(out).sendall(str('MARKER'
+            for out in self.outgoingTCP:
+                self.outgoingTCP.get(out).sendall(str('MARKER'
                                                                  + '-'
                                                                  + str(out)
                                                                  + '-2|').encode())
                 print('sent to ' + str(out))
         else:
-            self.receiveMsgs(incomingTCP)
-
-
-
-
-
-
+            self.receiveMsgs(self.incomingTCP)
 
 
 
@@ -100,6 +94,7 @@ class Paxos():
 
     def acknowledge():
 
+    def sendmsg(string):
 
 
     def propose():
