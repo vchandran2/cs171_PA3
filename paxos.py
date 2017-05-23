@@ -125,7 +125,7 @@ class Paxos():
             for out in self.outgoingTCP:
                 self.outgoingTCP.get(out).sendall(str('prepare|'
                                                                  + str(self.ballotNum)
-                                                                 ).encode())
+                                                                 + '&').encode())
                 print('sent to ' + str(out))
             self.receiveMsgs(self.incomingTCP)
         else:
