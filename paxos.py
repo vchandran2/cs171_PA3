@@ -1,4 +1,3 @@
-import sys
 import socket
 import time
 
@@ -17,6 +16,8 @@ class Paxos():
         self.proposedVal = None # when a process wants to propose a value, it'll be stored here
         self.majority = 0
         self.firstTimeAccept = True
+        self.decided = False
+        self.rcvdDacks = {} # receive dack (channel:ack)
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -63,21 +64,27 @@ class Paxos():
             print('sent accept ' + str(self.val) + ' to ' + str(out))
 
     def receiveMsgs(self, incomingTCP):
-        while True:
-            #print("RECEIVING MESSAGES")
-            for channel in incomingTCP:
-                try:
-                    #print("Starting for loop in receiveMSGS. Channel = ",channel)
-                    data = incomingTCP.get(channel).recv(1024).decode()
-                    data_split = data.strip().split('&')
-                    data_split = list(filter(None, data_split))
-                    for data in data_split:
-                        data = data.strip().split('|')
+        #print("RECEIVING MESSAGES")
+        for channel in incomingTCP:
+            try:
+            #print("Starting for loop in receiveMSGS. Channel = ",channel)
+                data = incomingTCP.get(channel).recv(1024).decode()
+                data_split = data.strip().split('&')
+                data_split = list(filter(None, data_split))
+                for data in data_split:
+                    data = data.strip().split('|')
+                    if self.decided == True:
+                        if(data[0] == 'dack'):
+                            if channel not in self.rcvdDacks:
+                                self.rcvdDacks[channel] = data
+                        if(data[0] == 'decide'):
+                            self.send_dack(channel)
+                    else:
                         if (data[0] == 'decide'):
                             print('deciding on ' + data[1])
                             self.val = int(data[1])
-                            print("decided on: ", self.val)
-                            quit()
+                            self.send_dack(channel)
+                            self.decide()
                         # prepare msg looks like this: prepare|ballotNum
                         if (data[0] == 'prepare'):
                             self.rcvPrepare(data, channel)
@@ -89,8 +96,8 @@ class Paxos():
                             ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
                             val = int(data[2])
                             self.recvAccept(ballotRcvd,val)
-                except socket.error:
-                    continue
+            except socket.error:
+                continue
 
     def setup(self):
         f = open('setup.txt', 'r')
@@ -138,7 +145,8 @@ class Paxos():
             self.propose(3)
         if (self.ID == 3):
             self.propose(1)
-        self.receiveMsgs(self.incomingTCP)
+        while True:
+            self.receiveMsgs(self.incomingTCP)
 
     def compareBallots(self,ballot1,ballot2): # returns true if ballot1 is greater or equal to ballot2
         b1 = str(ballot1[0]) + str(ballot1[1])
@@ -186,10 +194,18 @@ class Paxos():
     def decide(self):
         print("deciding on value: ",self.val)
         msg = "decide|" + str(self.val) + '&'
-        for id in self.outgoingTCP:
-            self.outgoingTCP[id].sendall(msg.encode())
+        self.decided = True
+        num_othersites = len(self.sites) - 1
+        while len(self.rcvdDacks) != num_othersites:
+            for id in self.outgoingTCP:
+                self.outgoingTCP[id].sendall(msg.encode())
+            time.sleep(1)
+            self.receiveMsgs(self.incomingTCP)
         quit()
 
+    def send_dack(self,channel):
+        msg = 'dack|'+ str(self.ID) + '&'
+        self.outgoingTCP[channel].sendall(msg.encode())
 
 
     '''
