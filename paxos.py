@@ -68,7 +68,8 @@ class Paxos():
             for channel in incomingTCP:
                 try:
                     data = incomingTCP.get(channel).recv(1024).decode()
-                    data_split = data.split('&')
+                    data_split = data.strip().split('&')
+                    data_split = list(filter(None, data_split))
                     print('data_split = ' + str(data_split))
                     for data in data_split:
                         data = data.strip().split('|')
@@ -130,14 +131,9 @@ class Paxos():
             line = f.readline()
         # practicing just sending message from ID 1 to all others
         if (self.ID == 1):
-            self.ballotNum[0] = 1
-            self.ballotNum[1] = self.ID
-            self.proposedVal = 5
-            for out in self.outgoingTCP:
-                self.outgoingTCP.get(out).sendall(str('prepare|'
-                                                                 + str(self.ballotNum)
-                                                                 + '&').encode())
-                print('sent to ' + str(out))
+            self.propose(5)
+        if (self.ID == 2):
+            self.propose(3)
         self.majority = (len(self.sites) // 2) + 1
         self.receiveMsgs(self.incomingTCP)
 
