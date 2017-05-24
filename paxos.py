@@ -2,7 +2,6 @@ import sys
 import socket
 import time
 
-
 class Paxos():
     def __init__(self, index, ID):
         self.rcvdVotes = {} # upon receiving ack, add (channel:acknowledge msg) to this dict. not including mine
@@ -10,12 +9,14 @@ class Paxos():
         self.index = index # for when we expand to PRM
         self.ballotNum = [0, 0]
         self.acceptNum = [0, 0]
-        self.outgoingTCP = {}
-        self.incomingTCP = {}
+        self.outgoingTCP = {}   #id: socket
+        self.incomingTCP = {}   #id: socket
         self.val = None # null until a value has been accepted by majority
         self.ID = ID
         self.sites = {} # all the sites and their TCPs
         self.proposedVal = None # when a process wants to propose a value, it'll be stored here
+        self.majority = 0
+        self.log = [self.val for i in range(3)]
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -28,7 +29,7 @@ class Paxos():
                                                   + str(self.ballotNum) + '|'
                                                   + str(self.acceptNum) + '|'
                                                   + str(self.val)
-                                                  ).encode())
+                                                  +'&').encode())
             print('sent ack ' + str(self.ballotNum) + ' to ' + str(channel))
 
     def rcvAck(self, data, channel):
@@ -57,7 +58,7 @@ class Paxos():
             self.outgoingTCP.get(out).sendall(str('accept|'
                                                   + str(self.ballotNum) +'|'
                                                   + str(self.val)
-                                                  ).encode())
+                                                  +'&').encode())
             print('sent accept ' + str(self.val) + ' to ' + str(out))
 
     def receiveMsgs(self, incomingTCP):
@@ -65,13 +66,15 @@ class Paxos():
             for channel in incomingTCP:
                 try:
                     data = incomingTCP.get(channel).recv(1024)
-                    data = data.decode().strip().split('|')
-                    # prepare msg looks like this: prepare|ballotNum
-                    if (data[0] == 'prepare'):
-                        self.rcvPrepare(data, channel)
-                    # ack msg looks like this: ack|ballotNum|acceptNum|val
-                    if (data[0] == 'ack'):
-                        self.rcvAck(data, channel)
+                    data_split = data.split("&")
+                    for data in data_split:
+                        data = data.decode().strip().split('|')
+                        # prepare msg looks like this: prepare|ballotNum
+                        if (data[0] == 'prepare'):
+                            self.rcvPrepare(data, channel)
+                        # ack msg looks like this: ack|ballotNum|acceptNum|val
+                        if (data[0] == 'ack'):
+                            self.rcvAck(data, channel)
                 except socket.error:
                     break
 
@@ -113,7 +116,9 @@ class Paxos():
                 conn.setblocking(0)
                 self.incomingTCP[sender] = conn
             line = f.readline()
+        self.majority = (len(self.sites) // 2) + 1
         self.receiveMsgs(self.incomingTCP)
+
 
 
     def propose(self, value):
@@ -127,6 +132,27 @@ class Paxos():
             print('sent to ' + str(out))
         self.receiveMsgs(self.incomingTCP)
 
+    def recvAccept(self,ballot,value): # takes in accept msg
+        self.numAccepts += 1
+        if(self.ballotNum < ballot):
+            self.acceptNum = ballot
+            self.val = value
+            msg = "accept|"+str(ballot)+"|"+ str(value)
+            for id in self.outgoingTCP:
+                self.outgoingTCP[id].sendall(msg.encode())
+        if self.numAccepts > self.majority:
+            self.decide()
+
+    def decide(self):
+        index = 0
+        for val in self.log:
+            if val != None:
+                self.log.insert(index,self.val)
+                msg = "decide|" + str(self.val) + "|" + str(index) + '&'
+                for id in self.outgoingTCP:
+                    self.outgoingTCP[id].sendall(msg.encode())
+                break
+            index += 1
     '''
     def accept():
 
