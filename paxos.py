@@ -45,6 +45,7 @@ class Paxos():
                     ballotRcvd = list(map(int, self.rcvdVotes[vote][1].strip('[]').split(',')))
                     if (maxVote == None):
                         maxVote = self.rcvdVotes[vote]
+
                     elif ((ballotRcvd[0] > list(map(int, maxVote[1].strip('[]').split(',')))[0])
                             | (ballotRcvd[0] == list(map(int, maxVote[1].strip('[]').split(',')))[0])
                             & (ballotRcvd[1] > list(map(int, maxVote[1].strip('[]').split(',')))[1])):
@@ -65,16 +66,20 @@ class Paxos():
         while True:
             for channel in incomingTCP:
                 try:
-                    data = incomingTCP.get(channel).recv(1024)
+                    data = incomingTCP.get(channel).recv(1024).decode()
                     data_split = data.split("&")
                     for data in data_split:
-                        data = data.decode().strip().split('|')
+                        data = data.strip().split('|')
                         # prepare msg looks like this: prepare|ballotNum
                         if (data[0] == 'prepare'):
                             self.rcvPrepare(data, channel)
                         # ack msg looks like this: ack|ballotNum|acceptNum|val
                         if (data[0] == 'ack'):
                             self.rcvAck(data, channel)
+                        if (data[0] == 'accept'):
+                            ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
+                            val = int(data[2])
+                            self.recvAccept(ballotRcvd,val)
                 except socket.error:
                     break
 
@@ -116,10 +121,27 @@ class Paxos():
                 conn.setblocking(0)
                 self.incomingTCP[sender] = conn
             line = f.readline()
+        # practicing just sending message from ID 1 to all others
+        if (self.ID == 1):
+            self.ballotNum[0] = 1
+            self.ballotNum[1] = self.ID
+            self.proposedVal = 5
+            for out in self.outgoingTCP:
+                self.outgoingTCP.get(out).sendall(str('prepare|'
+                                                                 + str(self.ballotNum)
+                                                                 + '&').encode())
+                print('sent to ' + str(out))
         self.majority = (len(self.sites) // 2) + 1
         self.receiveMsgs(self.incomingTCP)
 
-
+    def compareBallots(self,ballot1,ballot2): # returns true if ballot1 is greater or equal to ballot2
+        b1 = str(ballot1[0]) + str(ballot1[1])
+        b2 = str(ballot2[0]) + str(ballot2[1])
+        b1 = int(b1)
+        b2 = int(b2)
+        if b1 > b2:
+            return True
+        return False
 
     def propose(self, value):
         self.ballotNum[0] += 1
@@ -127,14 +149,15 @@ class Paxos():
         self.proposedVal = value
         for out in self.outgoingTCP:
             self.outgoingTCP.get(out).sendall(str('prepare|'
-                                                        + str(self.ballotNum)
-                                                        ).encode())
+                                                  + str(self.ballotNum)
+                                                  ).encode())
             print('sent to ' + str(out))
         self.receiveMsgs(self.incomingTCP)
 
     def recvAccept(self,ballot,value): # takes in accept msg
         self.numAccepts += 1
-        if(self.ballotNum < ballot):
+        print("received accept: (ballot,value) = ",ballot,",",value)
+        if self.compareBallots(ballot,self.ballotNum):
             self.acceptNum = ballot
             self.val = value
             msg = "accept|"+str(ballot)+"|"+ str(value)
@@ -147,6 +170,7 @@ class Paxos():
         index = 0
         for val in self.log:
             if val != None:
+                print("deciding on value: ",self.val," index:",index)
                 self.log.insert(index,self.val)
                 msg = "decide|" + str(self.val) + "|" + str(index) + '&'
                 for id in self.outgoingTCP:
@@ -154,11 +178,7 @@ class Paxos():
                 break
             index += 1
     '''
-    def accept():
-
     def acknowledge():
-
-    def sendmsg(string):
 
 
     def propose():
