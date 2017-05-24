@@ -64,8 +64,10 @@ class Paxos():
 
     def receiveMsgs(self, incomingTCP):
         while True:
+            print("RECEIVING MESSAGES")
             for channel in incomingTCP:
                 try:
+                    print("Starting for loop in receiveMSGS. Channel = ",channel)
                     data = incomingTCP.get(channel).recv(1024).decode()
                     data_split = data.strip().split('&')
                     data_split = list(filter(None, data_split))
@@ -74,6 +76,7 @@ class Paxos():
                         data = data.strip().split('|')
                         if (data[0] == 'decide'):
                             self.val = int(data[1])
+                            print("decided on: ", self.val)
                             quit()
                         # prepare msg looks like this: prepare|ballotNum
                         if (data[0] == 'prepare'):
@@ -164,6 +167,7 @@ class Paxos():
             self.accepts_dict[b_key] += 1
         print("received accept: (ballot,value) = ",ballot,",",value)
         if self.compareBallots(ballot,self.ballotNum):
+            print("ballot: ",ballot," is greater than: ", self.ballotNum)
             self.acceptNum = ballot
             self.val = value
             if self.firstTimeAccept == True:
@@ -174,12 +178,14 @@ class Paxos():
                 self.firstTimeAccept = False
         if self.accepts_dict[b_key] == self.majority:
             self.decide()
+        print("DONE WITH RECVACCEPT")
 
     def decide(self):
         print("deciding on value: ",self.val)
         msg = "decide|" + str(self.val) + '&'
         for id in self.outgoingTCP:
             self.outgoingTCP[id].sendall(msg.encode())
+        quit()
 
 
 
