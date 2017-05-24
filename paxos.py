@@ -17,6 +17,7 @@ class Paxos():
         self.proposedVal = None # when a process wants to propose a value, it'll be stored here
         self.majority = 0
         self.firstTimeAccept = True
+        self.stopped = False
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -63,38 +64,45 @@ class Paxos():
             print('sent accept ' + str(self.val) + ' to ' + str(out))
 
     def receiveMsgs(self, incomingTCP):
-        while True:
-            #print("RECEIVING MESSAGES")
-            for channel in incomingTCP:
-                try:
-                    #print("Starting for loop in receiveMSGS. Channel = ",channel)
-                    data = incomingTCP.get(channel).recv(1024).decode()
-                    data_split = data.strip().split('&')
-                    data_split = list(filter(None, data_split))
-                    for data in data_split:
-                        data = data.strip().split('|')
-                        if (data[0] == 'decide'):
-                            print('deciding on ' + data[1])
-                            self.val = int(data[1])
-                            print("decided on: ", self.val)
-                            quit()
-                        # prepare msg looks like this: prepare|ballotNum
-                        if (data[0] == 'prepare'):
-                            self.rcvPrepare(data, channel)
-                        # ack msg looks like this: ack|ballotNum|acceptNum|val
-                        if (data[0] == 'ack'):
-                            self.rcvAck(data, channel)
-                        if (data[0] == 'accept'):
-                            print(str(data) + ' from ' + str(channel))
-                            ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
-                            val = int(data[2])
-                            self.recvAccept(ballotRcvd,val)
-                except socket.error:
-                    continue
+        # print("RECEIVING MESSAGES")
+        for channel in incomingTCP:
+            try:
+                # print("Starting for loop in receiveMSGS. Channel = ",channel)
+                data = incomingTCP.get(channel).recv(1024).decode()
+                data_split = data.strip().split('&')
+                data_split = list(filter(None, data_split))
+                for data in data_split:
+                    data = data.strip().split('|')
+                    if (data[0] == 'decide'):
+                        print('deciding on ' + data[1])
+                        self.val = int(data[1])
+                        print("decided on: ", self.val)
+                        quit()
+                    # prepare msg looks like this: prepare|ballotNum
+                    if (data[0] == 'prepare'):
+                        self.rcvPrepare(data, channel)
+                    # ack msg looks like this: ack|ballotNum|acceptNum|val
+                    if (data[0] == 'ack'):
+                        self.rcvAck(data, channel)
+                    if (data[0] == 'accept'):
+                        print(str(data) + ' from ' + str(channel))
+                        ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
+                        val = int(data[2])
+                        self.recvAccept(ballotRcvd, val)
+            except socket.error:
+                continue
 
     def setup(self):
         f = open('setup.txt', 'r')
         numProc = int(f.readline().strip())
+        TCP_PRM = f.readline().strip().split()
+        TCP_PRM_IP = TCP_PRM[0]
+        TCP_PRM_PORT = TCP_PRM[1]
+        p = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        p.connect((TCP_IP, TCP_PORT))
+        print('connected to PRM')
+        # we skip the next line because it is the CLI
+        f.readline()
         for i in range(numProc):
             self.sites[i + 1] = f.readline().strip().split()
         print(self.sites)
@@ -107,6 +115,9 @@ class Paxos():
         print('trying to bind to ' + str(TCP_IP) + ', ' + str(TCP_PORT))
         s.bind((TCP_IP, TCP_PORT))
         s.listen(1)
+        # accepting from PRM
+        conn, addr = s.accept()
+        conn.setblocking(0)
         line = f.readline()
         while (line != ''):
             line = line.strip().split()
@@ -190,15 +201,7 @@ class Paxos():
             self.outgoingTCP[id].sendall(msg.encode())
         quit()
 
+    def receiveCommands(self):
 
-
-    '''
-    def acknowledge():
-
-
-    def propose():
-
-    def decide():
-    '''
 
 
