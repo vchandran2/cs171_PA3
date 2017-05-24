@@ -16,7 +16,8 @@ class Paxos():
         self.sites = {} # all the sites and their TCPs
         self.proposedVal = None # when a process wants to propose a value, it'll be stored here
         self.majority = 0
-        self.log = [self.val for i in range(3)]
+        self.log = [None for i in range(3)]
+        self.firstTimeAccept = True
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -67,9 +68,14 @@ class Paxos():
             for channel in incomingTCP:
                 try:
                     data = incomingTCP.get(channel).recv(1024).decode()
-                    data_split = data.split("&")
+                    data_split = data.split('&')
+                    print('data_split = ' + str(data_split))
                     for data in data_split:
                         data = data.strip().split('|')
+                        if (data[0] == 'decide'):
+                            self.val = int(data[1])
+                            self.index = int(data[2])
+                            quit()
                         # prepare msg looks like this: prepare|ballotNum
                         if (data[0] == 'prepare'):
                             self.rcvPrepare(data, channel)
@@ -77,6 +83,7 @@ class Paxos():
                         if (data[0] == 'ack'):
                             self.rcvAck(data, channel)
                         if (data[0] == 'accept'):
+                            print(str(data) + ' from ' + str(channel))
                             ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
                             val = int(data[2])
                             self.recvAccept(ballotRcvd,val)
@@ -99,7 +106,7 @@ class Paxos():
         s.bind((TCP_IP, TCP_PORT))
         s.listen(1)
         line = f.readline()
-        while (line != ""):
+        while (line != ''):
             line = line.strip().split()
             sender = int(line[0])
             recvr = int(line[1])
@@ -150,41 +157,36 @@ class Paxos():
         for out in self.outgoingTCP:
             self.outgoingTCP.get(out).sendall(str('prepare|'
                                                   + str(self.ballotNum)
+                                                  + '&'
                                                   ).encode())
             print('sent to ' + str(out))
         self.receiveMsgs(self.incomingTCP)
 
     def recvAccept(self,ballot,value): # takes in accept msg
         self.numAccepts += 1
-        print("received accept: (ballot,value) = ",ballot,",",value)
+        print('received accept: (ballot,value) = ',ballot,',',value)
         if self.compareBallots(ballot,self.ballotNum):
             self.acceptNum = ballot
             self.val = value
-            msg = "accept|"+str(ballot)+"|"+ str(value)
-            print("from recvAcc, sending accept msg: ",msg)
-            for id in self.outgoingTCP:
-                self.outgoingTCP[id].sendall(msg.encode())
-        if self.numAccepts >= self.majority:
+            if self.firstTimeAccept == True:
+                msg = 'accept|'+str(ballot)+'|'+ str(value) + '&'
+                print('from recvAcc, sending accept msg: ',msg)
+                for id in self.outgoingTCP:
+                    self.outgoingTCP[id].sendall(msg.encode())
+                self.firstTimeAccept = False
+        # i think we should only act decide the first time we see majority
+        if self.numAccepts == self.majority:
             self.decide()
 
     def decide(self):
         index = 0
         for val in self.log:
             if val == None:
-                print("deciding on value: ",self.val," index:",index)
+                print('deciding on value: ',self.val,' index:',index)
                 self.log.insert(index,self.val)
-                msg = "decide|" + str(self.val) + "|" + str(index) + '&'
+                msg = 'decide|' + str(self.val) + '|' + str(index) + '&'
                 for id in self.outgoingTCP:
                     self.outgoingTCP[id].sendall(msg.encode())
                 break
             index += 1
-    '''
-    def acknowledge():
-
-
-    def propose():
-
-    def decide():
-    '''
-
 
