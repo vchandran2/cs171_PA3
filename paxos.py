@@ -139,7 +139,7 @@ class Paxos():
         b2 = str(ballot2[0]) + str(ballot2[1])
         b1 = int(b1)
         b2 = int(b2)
-        if b1 > b2:
+        if b1 >= b2:
             return True
         return False
 
@@ -161,15 +161,16 @@ class Paxos():
             self.acceptNum = ballot
             self.val = value
             msg = "accept|"+str(ballot)+"|"+ str(value)
+            print("from recvAcc, sending accept msg: ",msg)
             for id in self.outgoingTCP:
                 self.outgoingTCP[id].sendall(msg.encode())
-        if self.numAccepts > self.majority:
+        if self.numAccepts >= self.majority:
             self.decide()
 
     def decide(self):
         index = 0
         for val in self.log:
-            if val != None:
+            if val == None:
                 print("deciding on value: ",self.val," index:",index)
                 self.log.insert(index,self.val)
                 msg = "decide|" + str(self.val) + "|" + str(index) + '&'
