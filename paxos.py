@@ -64,17 +64,17 @@ class Paxos():
 
     def receiveMsgs(self, incomingTCP):
         while True:
-            print("RECEIVING MESSAGES")
+            #print("RECEIVING MESSAGES")
             for channel in incomingTCP:
                 try:
-                    print("Starting for loop in receiveMSGS. Channel = ",channel)
+                    #print("Starting for loop in receiveMSGS. Channel = ",channel)
                     data = incomingTCP.get(channel).recv(1024).decode()
                     data_split = data.strip().split('&')
                     data_split = list(filter(None, data_split))
-                    print('data_split = ' + str(data_split))
                     for data in data_split:
                         data = data.strip().split('|')
                         if (data[0] == 'decide'):
+                            print('deciding on ' + data[1])
                             self.val = int(data[1])
                             print("decided on: ", self.val)
                             quit()
@@ -90,7 +90,7 @@ class Paxos():
                             val = int(data[2])
                             self.recvAccept(ballotRcvd,val)
                 except socket.error:
-                    break
+                    continue
 
     def setup(self):
         f = open('setup.txt', 'r')
@@ -131,11 +131,13 @@ class Paxos():
                 self.incomingTCP[sender] = conn
             line = f.readline()
         # practicing just sending message from ID 1 to all others
+        self.majority = (len(self.sites) // 2) + 1
         if (self.ID == 1):
             self.propose(5)
         if (self.ID == 2):
             self.propose(3)
-        self.majority = (len(self.sites) // 2) + 1
+        if (self.ID == 3):
+            self.propose(1)
         self.receiveMsgs(self.incomingTCP)
 
     def compareBallots(self,ballot1,ballot2): # returns true if ballot1 is greater or equal to ballot2
@@ -176,6 +178,7 @@ class Paxos():
                 for id in self.outgoingTCP:
                     self.outgoingTCP[id].sendall(msg.encode())
                 self.firstTimeAccept = False
+        print('num for ballot ' + str(b_key) + ':' + str(self.accepts_dict[b_key]) + ' majority: ' + str(self.majority))
         if self.accepts_dict[b_key] == self.majority:
             self.decide()
         print("DONE WITH RECVACCEPT")
