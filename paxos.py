@@ -74,7 +74,7 @@ class Paxos():
                         data = data.strip().split('|')
                         if (data[0] == 'decide'):
                             self.val = int(data[1])
-                            return
+                            quit()
                         # prepare msg looks like this: prepare|ballotNum
                         if (data[0] == 'prepare'):
                             self.rcvPrepare(data, channel)
