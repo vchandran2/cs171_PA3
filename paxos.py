@@ -5,7 +5,7 @@ import time
 class Paxos():
     def __init__(self, index, ID):
         self.rcvdVotes = {} # upon receiving ack, add (channel:acknowledge msg) to this dict. not including mine
-        self.numAccepts = 0
+        self.accepts_dict = {} # ballotnum:number of accepts
         self.index = index # for when we expand to PRM
         self.ballotNum = [0, 0]
         self.acceptNum = [0, 0]
@@ -16,7 +16,6 @@ class Paxos():
         self.sites = {} # all the sites and their TCPs
         self.proposedVal = None # when a process wants to propose a value, it'll be stored here
         self.majority = 0
-        self.log = [None for i in range(3)]
         self.firstTimeAccept = True
 
     def rcvPrepare(self, data, channel):
@@ -75,8 +74,7 @@ class Paxos():
                         data = data.strip().split('|')
                         if (data[0] == 'decide'):
                             self.val = int(data[1])
-                            self.index = int(data[2])
-                            quit()
+                            return
                         # prepare msg looks like this: prepare|ballotNum
                         if (data[0] == 'prepare'):
                             self.rcvPrepare(data, channel)
@@ -159,30 +157,39 @@ class Paxos():
         self.receiveMsgs(self.incomingTCP)
 
     def recvAccept(self,ballot,value): # takes in accept msg
-        self.numAccepts += 1
-        print('received accept: (ballot,value) = ',ballot,',',value)
+        b_key = str(ballot)
+        if b_key not in self.accepts_dict:
+            self.accepts_dict[b_key] = 1
+        else:
+            self.accepts_dict[b_key] += 1
+        print("received accept: (ballot,value) = ",ballot,",",value)
         if self.compareBallots(ballot,self.ballotNum):
             self.acceptNum = ballot
             self.val = value
             if self.firstTimeAccept == True:
-                msg = 'accept|'+str(ballot)+'|'+ str(value) + '&'
-                print('from recvAcc, sending accept msg: ',msg)
+                msg = "accept|"+b_key+"|"+ str(value) + "&"
+                print("from recvAcc, sending accept msg: ",msg)
                 for id in self.outgoingTCP:
                     self.outgoingTCP[id].sendall(msg.encode())
                 self.firstTimeAccept = False
-        # i think we should only act decide the first time we see majority
-        if self.numAccepts == self.majority:
+        if self.accepts_dict[b_key] == self.majority:
             self.decide()
 
     def decide(self):
-        index = 0
-        for val in self.log:
-            if val == None:
-                print('deciding on value: ',self.val,' index:',index)
-                self.log.insert(index,self.val)
-                msg = 'decide|' + str(self.val) + '|' + str(index) + '&'
-                for id in self.outgoingTCP:
-                    self.outgoingTCP[id].sendall(msg.encode())
-                break
-            index += 1
+        print("deciding on value: ",self.val)
+        msg = "decide|" + str(self.val) + '&'
+        for id in self.outgoingTCP:
+            self.outgoingTCP[id].sendall(msg.encode())
+
+
+
+    '''
+    def acknowledge():
+
+
+    def propose():
+
+    def decide():
+    '''
+
 
