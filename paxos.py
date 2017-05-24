@@ -44,7 +44,6 @@ class Paxos():
                     ballotRcvd = list(map(int, self.rcvdVotes[vote][1].strip('[]').split(',')))
                     if (maxVote == None):
                         maxVote = self.rcvdVotes[vote]
-
                     elif ((ballotRcvd[0] > list(map(int, maxVote[1].strip('[]').split(',')))[0])
                             | (ballotRcvd[0] == list(map(int, maxVote[1].strip('[]').split(',')))[0])
                             & (ballotRcvd[1] > list(map(int, maxVote[1].strip('[]').split(',')))[1])):
@@ -114,22 +113,19 @@ class Paxos():
                 conn.setblocking(0)
                 self.incomingTCP[sender] = conn
             line = f.readline()
-        # practicing just sending message from ID 1 to all others
-        if (self.ID == 1):
-            self.ballotNum[0] = 1
-            self.ballotNum[1] = self.ID
-            self.proposedVal = 5
-            for out in self.outgoingTCP:
-                self.outgoingTCP.get(out).sendall(str('prepare|'
-                                                                 + str(self.ballotNum)
-                                                                 ).encode())
-                print('sent to ' + str(out))
-            self.receiveMsgs(self.incomingTCP)
-        else:
-            self.receiveMsgs(self.incomingTCP)
+        self.receiveMsgs(self.incomingTCP)
 
 
-
+    def propose(self, value):
+        self.ballotNum[0] += 1
+        self.ballotNum[1] = self.ID
+        self.proposedVal = value
+        for out in self.outgoingTCP:
+            self.outgoingTCP.get(out).sendall(str('prepare|'
+                                                        + str(self.ballotNum)
+                                                        ).encode())
+            print('sent to ' + str(out))
+        self.receiveMsgs(self.incomingTCP)
 
     '''
     def accept():
