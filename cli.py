@@ -3,9 +3,10 @@ import time
 
 class cli:
     def __init__(self):
-        self.mapsockets = 0                # list of outgoing sockets to mappers
-        self.reducer_socket = 0            # outgoing socket to reducer
-        self.prm_socket = 0                # outgoing socket to prm
+        self.mapsockets = None                # list of outgoing sockets to mappers
+        self.reducer_socket = None            # outgoing socket to reducer
+        self.prm_socket_out = None                # outgoing socket to prm
+        self.prm_socket_in = None
         self.ID = 5005                     # can be generalized with an argument. for now, this only works for one CLI
 
     def setup(self):
@@ -36,6 +37,7 @@ class cli:
                         TCP_PORT = int(TCP[1])
                         n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         n.connect((TCP_IP, TCP_PORT))
+                        self.prm_socket_out = n
                         print('connected to ' + str(recvr))
                         break
                     except socket.error:
@@ -43,6 +45,7 @@ class cli:
             elif (self.ID == recvr):
                 print('trying to accept')
                 conn, addr = s.accept()
+                self.prm_socket_in = conn
                 conn.setblocking(0)
             line = f.readline()
 
@@ -50,7 +53,31 @@ class cli:
 
 
     def execute_commands(self):
-        inputstr = input("Enter command: ")
+        while True:
+            inputstr = input("Enter command: ")
+            inputstr = inputstr.split()
+            if inputstr[0] == 'replicate':
+                filename = inputstr[1]
+                msg = 'replicate|'+ filename + '&'
+                self.prm_socket_out.sendall(msg.encode())
+                return 0
+            elif inputstr[0] == 'stop':
+                msg = 'stop&'
+                self.prm_socket_out.sendall(msg.encode())
+                return 0
+            elif inputstr[0] == 'resume':
+                msg = 'resume&'
+                self.prm_socket_out.sendall(msg.encode())
+                return 0
+            elif inputstr[0] == 'total':
+                return 0
+            elif inputstr[0] == 'print':
+                return 0
+            elif inputstr[0] == 'merge':
+                return 0
+            else:
+                print("invalid commmand")
+
 
 
     def replicate(self):
