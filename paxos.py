@@ -107,8 +107,13 @@ class Paxos():
         TCP_PRM_IP = TCP_PRM[0]
         TCP_PRM_PORT = TCP_PRM[1]
         p = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        p.connect((TCP_IP, TCP_PORT))
-        print('connected to PRM')
+        while True:
+            try:
+                p.connect((TCP_IP, TCP_PORT))
+                print('connected to PRM')
+                break
+            except socket.error:
+                time.sleep(1)
         # we skip the next line because it is the CLI
         f.readline()
         for i in range(numProc):
@@ -151,12 +156,14 @@ class Paxos():
             line = f.readline()
         # practicing just sending message from ID 1 to all others
         self.majority = (len(self.sites) // 2) + 1
+        '''
         if (self.ID == 1):
             self.propose(5)
         if (self.ID == 2):
             self.propose(3)
         if (self.ID == 3):
             self.propose(1)
+        '''
         while True:
             self.receiveMsgs(self.incomingTCP)
 
