@@ -6,46 +6,45 @@ class cli:
         self.mapsockets = 0                # list of outgoing sockets to mappers
         self.reducer_socket = 0            # outgoing socket to reducer
         self.prm_socket = 0                # outgoing socket to prm
+        self.ID = 5005                     # can be generalized with an argument. for now, this only works for one CLI
 
     def setup(self):
-        f = open('setup.txt', 'r')
-        f.readline() #skip first line
-        TCP_PRM = f.readline().strip().split()
-        TCP_PRM_IP = TCP_PRM[0]
-        TCP_PRM_PORT = int(TCP_PRM[1])
-
-        TCP_CLI = f.readline().strip().split()
-        TCP_CLI_IP = TCP_CLI[0]
-        TCP_CLI_PORT = int(TCP_CLI[1])
+        f = open('setupEx', 'r')
+        sitesEx = {}
+        for i in range(5):
+            TCP = f.readline().strip().split()
+            sitesEx[int(TCP[1])] = TCP
+        TCP = sitesEx.get(self.ID)
+        print(TCP)
+        TCP_IP = TCP[0]
+        TCP_PORT = int(TCP[1])
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind((TCP_CLI_IP, TCP_CLI_PORT))
+        print('trying to bind to ' + str(TCP_IP) + ', ' + str(TCP_PORT))
+        s.bind((TCP_IP, TCP_PORT))
         s.listen(1)
-        print('listening on CLI',TCP_CLI_PORT)
-        # accept from PRM
-        s.setblocking(0)
-        while True:
-            try:
+        line = f.readline()
+        while (line != ''):
+            line = line.strip().split()
+            sender = int(line[0])
+            recvr = int(line[1])
+            if (self.ID == sender):
+                while True:
+                    try:
+                        TCP = sitesEx.get(recvr)
+                        TCP_IP = TCP[0]
+                        TCP_PORT = int(TCP[1])
+                        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        n.connect((TCP_IP, TCP_PORT))
+                        print('connected to ' + str(recvr))
+                        break
+                    except socket.error:
+                        time.sleep(1)
+            elif (self.ID == recvr):
+                print('trying to accept')
                 conn, addr = s.accept()
-                print('accepted from PRM')
-                break
-            except socket.error:
-                print('error')
-                time.sleep(1)
-        conn.setblocking(0)
-        print('accepted from PRM')
-        # try to connect with PRM
-        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print ('trying to connect to', TCP_PRM_PORT)
-        while True:
-            try:
-                n.connect((TCP_PRM_IP, TCP_PRM_PORT))
-                self.prm_socket = n
-                print('connected to PRM')
-                break
-            except socket.error:
-                print('error')
-                time.sleep(1)
+                conn.setblocking(0)
+            line = f.readline()
 
 
 

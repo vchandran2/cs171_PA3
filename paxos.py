@@ -103,12 +103,6 @@ class Paxos():
     def setup(self):
         f = open('setup.txt', 'r')
         numProc = int(f.readline().strip())
-        TCP_PRM = f.readline().strip().split()
-        TCP_PRM_IP = TCP_PRM[0]
-        TCP_PRM_PORT = int(TCP_PRM[1])
-
-        # we skip the next line because it is the CLI
-        f.readline()
         for i in range(numProc):
             self.sites[i + 1] = f.readline().strip().split()
         print(self.sites)
@@ -122,19 +116,6 @@ class Paxos():
         s.bind((TCP_IP, TCP_PORT))
         s.listen(1)
         print('listening on paxos')
-        p = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print('trying to connect to PRM', TCP_PRM_PORT)
-        while True:
-            try:
-                p.connect((TCP_PRM_IP, TCP_PRM_PORT))
-                print('connected to PRM')
-                break
-            except socket.error:
-                time.sleep(1)
-        # accepting from PRM
-        conn, addr = s.accept()
-        conn.setblocking(0)
-        print('accepted PRM')
         line = f.readline()
         while (line != ''):
             line = line.strip().split()
@@ -158,6 +139,37 @@ class Paxos():
                 conn.setblocking(0)
                 self.incomingTCP[sender] = conn
             line = f.readline()
+        if (self.ID == 1): # trying with only connecting PRM and CLI to process 1.
+            # in the future, each process will connect to its own PRM and CLI
+            print('we are here!')
+            f = open('setupEx', 'r')
+            sitesEx = {}
+            for i in range(5):
+                TCP = f.readline().strip().split()
+                sitesEx[int(TCP[1])] = TCP
+            line = f.readline()
+            while (line != ''):
+                line = line.strip().split()
+                sender = int(line[0])
+                recvr = int(line[1])
+                # doing this annoying string comparison because the ports are in format 5003 and ID's are just 3
+                if (str(self.ID) == str(sender)[-1:]):
+                    while True:
+                        try:
+                            TCP = sitesEx.get(recvr)
+                            TCP_IP = TCP[0]
+                            TCP_PORT = int(TCP[1])
+                            n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            n.connect((TCP_IP, TCP_PORT))
+                            print('connected to ' + str(recvr))
+                            break
+                        except socket.error:
+                            time.sleep(1)
+                elif (str(self.ID) == str(recvr)[-1:]):
+                    conn, addr = s.accept()
+                    conn.setblocking(0)
+                line = f.readline()
+
         # practicing just sending message from ID 1 to all others
         self.majority = (len(self.sites) // 2) + 1
         '''
