@@ -19,29 +19,18 @@ class PRM():
         s.bind((TCP_PRM_IP, TCP_PRM_PORT))
         s.listen(1)
         print('listening on PRM',TCP_PRM_PORT)
-        # accept from CLI
-        conn, addr = s.accept()
-        conn.setblocking(0)
-        # should try to connect with the CLI
         TCP_CLI = f.readline().strip().split()
         TCP_CLI_IP = TCP_CLI[0]
         TCP_CLI_PORT = int(TCP_CLI[1])
         n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        while True:
-            try:
-                n.connect((TCP_CLI_IP, TCP_CLI_PORT))
-                print('connected to CLI')
-                break
-            except socket.error:
-                time.sleep(1)
-        # should then try to accept from its paxos module
-        conn, addr = s.accept()
-        conn.setblocking(0)
-        # should then try to connect with its paxos module, for our testing purposes, the first one
         TCP_PAX = f.readline().strip().split()
         TCP_PAX_IP = TCP_PAX[0]
         TCP_PAX_PORT = int(TCP_PAX[1])
-        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # should then try to accept from its paxos module
+        conn, addr = s.accept()
+        conn.setblocking(0)
+        print('accepted from paxos')
+        # should then try to connect with its paxos module, for our testing purposes, the first one
         while True:
             try:
                 n.connect((TCP_PAX_IP, TCP_PAX_PORT))
@@ -49,6 +38,19 @@ class PRM():
                 break
             except socket.error:
                 time.sleep(1)
+        # should try to connect with the CLI
+        print('trying to connect to CLI',TCP_CLI_PORT)
+        while True:
+            try:
+                n.connect((TCP_CLI_IP, TCP_CLI_PORT))
+                print('connected to CLI')
+                break
+            except socket.error:
+                time.sleep(1)
+        # accept from CLI
+        conn, addr = s.accept()
+        conn.setblocking(0)
+        print('conn', conn)
 
 
 

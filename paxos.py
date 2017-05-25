@@ -105,15 +105,8 @@ class Paxos():
         numProc = int(f.readline().strip())
         TCP_PRM = f.readline().strip().split()
         TCP_PRM_IP = TCP_PRM[0]
-        TCP_PRM_PORT = TCP_PRM[1]
-        p = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        while True:
-            try:
-                p.connect((TCP_IP, TCP_PORT))
-                print('connected to PRM')
-                break
-            except socket.error:
-                time.sleep(1)
+        TCP_PRM_PORT = int(TCP_PRM[1])
+
         # we skip the next line because it is the CLI
         f.readline()
         for i in range(numProc):
@@ -128,9 +121,20 @@ class Paxos():
         print('trying to bind to ' + str(TCP_IP) + ', ' + str(TCP_PORT))
         s.bind((TCP_IP, TCP_PORT))
         s.listen(1)
+        print('listening on paxos')
+        p = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print('trying to connect to PRM', TCP_PRM_PORT)
+        while True:
+            try:
+                p.connect((TCP_PRM_IP, TCP_PRM_PORT))
+                print('connected to PRM')
+                break
+            except socket.error:
+                time.sleep(1)
         # accepting from PRM
         conn, addr = s.accept()
         conn.setblocking(0)
+        print('accepted PRM')
         line = f.readline()
         while (line != ''):
             line = line.strip().split()

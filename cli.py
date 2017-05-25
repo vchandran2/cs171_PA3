@@ -13,16 +13,7 @@ class cli:
         TCP_PRM = f.readline().strip().split()
         TCP_PRM_IP = TCP_PRM[0]
         TCP_PRM_PORT = int(TCP_PRM[1])
-        # try to connect with PRM
-        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        while True:
-            try:
-                n.connect((TCP_PRM_IP, TCP_PRM_PORT))
-                self.prm_socket = n
-                print('connected to PRM')
-                break
-            except socket.error:
-                time.sleep(1)
+
         TCP_CLI = f.readline().strip().split()
         TCP_CLI_IP = TCP_CLI[0]
         TCP_CLI_PORT = int(TCP_CLI[1])
@@ -31,9 +22,30 @@ class cli:
         s.bind((TCP_CLI_IP, TCP_CLI_PORT))
         s.listen(1)
         print('listening on CLI',TCP_CLI_PORT)
-        #accept from PRM
-        conn, addr = s.accept()
+        # accept from PRM
+        s.setblocking(0)
+        while True:
+            try:
+                conn, addr = s.accept()
+                print('accepted from PRM')
+                break
+            except socket.error:
+                print('error')
+                time.sleep(1)
         conn.setblocking(0)
+        print('accepted from PRM')
+        # try to connect with PRM
+        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print ('trying to connect to', TCP_PRM_PORT)
+        while True:
+            try:
+                n.connect((TCP_PRM_IP, TCP_PRM_PORT))
+                self.prm_socket = n
+                print('connected to PRM')
+                break
+            except socket.error:
+                print('error')
+                time.sleep(1)
 
 
 
