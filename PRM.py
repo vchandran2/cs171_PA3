@@ -19,7 +19,7 @@ class PRM():
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
-        index = data[2]
+        index = int(data[2])
         if self.log[index] == None:
             self.log[index] = paxos1.Paxos(index)
         if self.log[index].decided: # if the object is already decided NO ACK
@@ -65,7 +65,7 @@ class PRM():
                                                   + str(self.log[self.index].ballotNum) +'|'
                                                   + str(self.log[self.index].val)
                                                   +'&').encode())
-            print('sent accept ' + str(self.val) + ' to ' + str(out))
+            print('sent accept ' + str(self.log[self.index].val) + ' to ' + str(out))
 
     def receiveMsgs(self, incomingTCP):
         #print("RECEIVING MESSAGES")
@@ -145,14 +145,12 @@ class PRM():
 
         # practicing just sending message from ID 1 to all others
         self.majority = (len(self.sites) // 2) + 1
-        '''
         if (self.ID == 1):
             self.propose(5)
         if (self.ID == 2):
             self.propose(3)
         if (self.ID == 3):
             self.propose(1)
-        '''
         while True:
             self.receiveMsgs(self.incomingTCP)
 
@@ -203,15 +201,17 @@ class PRM():
         print("DONE WITH RECVACCEPT")
 
     def decide(self):
-        print("deciding on value: ",self.val)
-        msg = "decide|" + str(self.val) + '&'
+        print("deciding on value: ",self.log[self.index].val)
+        msg = "decide|" + str(self.log[self.index].val) + '&'
         num_othersites = len(self.sites) - 1
+        self.log[self.index].decided = True
         while len(self.rcvdDacks) != num_othersites:
             for id in self.outgoingTCP:
                 self.outgoingTCP[id].sendall(msg.encode())
             time.sleep(1)
             self.receiveMsgs(self.incomingTCP)
         self.reset()
+        print("RESETED")
         quit()
 
     def send_dack(self,channel):
