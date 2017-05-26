@@ -80,43 +80,45 @@ class PRM():
             print('sent accept ' + str(self.log[self.index].val) + ' to ' + str(out))
 
     def receiveAll(self):
-        while True:
-            self.receiveCLI()
-            self.receiveMsgs(self.incomingTCP)
+        self.receiveCLI()
+        self.receiveMsgs(self.incomingTCP)
 
 
     def receiveCLI(self):
+        print("receiving from cli")
         try:
             data = self.cli_in_s.recv(1024).decode()
+            print("received from cli")
+            data = data.strip().split('&')
+            if self.stopped:
+                if data[0] == 'resume':
+                    self.resume()
+                return
+            if data[0] == 'replicate':
+                print("replicate received")
+                self.replicate(data[1])
+            elif data[0] == 'stop':
+                self.stop()
+            elif data[0] == 'resume':
+                self.resume()
+            elif data[0] == 'merge':
+                pos1 = int(data[1])
+                pos2 = int(data[2])
+                self.merge(pos1,pos2)
+            elif data[0] == 'total':
+                pos1 = int(data[1])
+                pos2 = int(data[2])
+                self.total(pos1,pos2)
+            elif data[0] == 'print':
+                self.printdata()
+            msg = 'success&'
+            self.cli_out_s.sendall(msg.encode())
         except socket.error:
             return
-        data = data.strip().split('&')
-        if self.stopped:
-            if data[0] == 'resume':
-                self.resume()
-            return
-        if data[0] == 'replicate':
-            self.replicate(data[1])
-        elif data[0] == 'stop':
-            self.stop()
-        elif data[0] == 'resume':
-            self.resume()
-        elif data[0] == 'merge':
-            pos1 = int(data[1])
-            pos2 = int(data[2])
-            self.merge(pos1,pos2)
-        elif data[0] == 'total':
-            pos1 = int(data[1])
-            pos2 = int(data[2])
-            self.total(pos1,pos2)
-        elif data[0] == 'print':
-            self.printdata()
-        msg = 'success&'
-        self.cli_out_s.sendall(msg.encode())
 
 
     def receiveMsgs(self, incomingTCP):
-        #print("RECEIVING MESSAGES")
+        print("RECEIVING MESSAGES")
         for channel in incomingTCP:
             try:
             #print("Starting for loop in receiveMSGS. Channel = ",channel)
@@ -204,7 +206,10 @@ class PRM():
         if (self.ID == 3):
             self.propose(1)
         '''
-        self.receiveAll()
+        print("receiving all")
+        while True:
+            self.receiveAll()
+            time.sleep(0.5)
 
     def setupCLI(self,serversock):
         cli_addr = ('127.0.0.1',6000+self.ID)
@@ -247,7 +252,7 @@ class PRM():
                                                   + '&'
                                                   ).encode())
             print('sent to ' + str(out))
-        self.receiveMsgs(self.incomingTCP)
+        #self.receiveMsgs(self.incomingTCP)
 
     def recvAccept(self,ballot,value): # takes in accept msg
         b_key = str(ballot)
@@ -297,6 +302,7 @@ class PRM():
         self.rcvdDacks = {}
 
     def replicate(self,filename):
+        print("replicating")
         logobj = log(filename)
         self.propose(logobj)
         print('done with replicate method')

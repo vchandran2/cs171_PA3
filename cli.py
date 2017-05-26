@@ -37,7 +37,7 @@ class cli:
     def execute_commands(self):
         while True:
             inputstr = input("Enter command: ")
-            inputstr = inputstr.split()
+            inputstr = inputstr.strip().split()
             msg = ''
             if inputstr[0] == 'replicate':
                 filename = inputstr[1]
@@ -74,5 +74,5 @@ class cli:
                             print('fail!')
                             return
             except socket.error:
-                return
+                continue
             time.sleep(0.5)
