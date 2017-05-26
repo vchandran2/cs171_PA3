@@ -150,7 +150,7 @@ class PRM():
                         if (data[0] == 'accept'):
                             print(str(data) + ' from ' + str(channel))
                             ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
-                            val = pickle.load(data[2])
+                            val = pickle.loads(data[2])
                             self.recvAccept(ballotRcvd,val)
             except socket.error:
                 continue
@@ -308,9 +308,19 @@ class PRM():
         print('done with replicate method')
 
     def merge(self,pos1,pos2):
+        combined_dict = {}
         dict1 = self.log[pos1].val.file
         dict2 = self.log[pos2].val.file
-        combined_dict = {**dict1,**dict2} #python hackery
+        for key in dict1:
+            if key not in combined_dict:
+                combined_dict[key] = dict1[key]
+            else:
+                combined_dict[key] += dict1[key]
+        for key in dict2:
+            if key not in combined_dict:
+                combined_dict[key] = dict2[key]
+            else:
+                combined_dict[key] += dict2[key]
         for key in combined_dict:
             print(key,combined_dict[key])
         print('end of merge method')
