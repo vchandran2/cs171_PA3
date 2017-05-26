@@ -29,54 +29,44 @@ class cli:
             except socket.error:
                 time.sleep(1)
         self.prm_socket_out = n
-        print("done")
-
-
-
-
+        print("done with setup")
+        self.execute_commands()
 
     def execute_commands(self):
         while True:
             inputstr = input("Enter command: ")
             inputstr = inputstr.split()
+            msg = ''
             if inputstr[0] == 'replicate':
                 filename = inputstr[1]
                 msg = 'replicate|'+ filename + '&'
-                self.prm_socket_out.sendall(msg.encode())
-                return 0
             elif inputstr[0] == 'stop':
                 msg = 'stop&'
-                self.prm_socket_out.sendall(msg.encode())
-                return 0
             elif inputstr[0] == 'resume':
                 msg = 'resume&'
-                self.prm_socket_out.sendall(msg.encode())
-                return 0
             elif inputstr[0] == 'total':
+                msg = 'total&'
                 return 0
             elif inputstr[0] == 'print':
-                return 0
+                msg = 'print&'
             elif inputstr[0] == 'merge':
-                return 0
+                msg = 'merge&'
             else:
                 print("invalid commmand")
+            self.prm_socket_out.sendall(msg.encode())
+            if msg != '':
+                self.wait()
+            msg = ''
 
-
-
-    def replicate(self):
-        return 0
-
-    def stop(self):
-        return 0
-
-    def resume(self):
-        return 0
-
-    def total(self):
-        return 0
-
-    def printCmd(self):
-        return 0
-
-    def merge(self):
-        return 0
+    def wait(self):
+        while True:
+            data = self.prm_socket_in.recv(1024).decode()
+            data_split = data.strip().split('&')
+            for data in data_split:
+                if len(data) >= 1:
+                    if data[0] == 'success':
+                        print('success!')
+                        return
+                    if data[0] == 'failure':
+                        print('fail!')
+                        return
