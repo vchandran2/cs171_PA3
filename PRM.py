@@ -2,7 +2,7 @@ import socket
 import time
 from paxos1 import Paxos
 from log import log
-import pickle
+import ast
 
 #TODO:
     # create readme
@@ -54,7 +54,7 @@ class PRM():
         majority = (len(self.sites) // 2) + 1
         self.rcvdVotes[channel] = data
         # if the number of rcvdVotes plus mine is a majority
-        if (len(self.rcvdVotes) + 1 >= majority):
+        if (len(self.rcvdVotes) + 1 == majority):
             # if all received values are None, then we set my val to my proposedVal
             # if not, then we set my val to the val that we received with the highest ballot
             maxVote = None
@@ -72,11 +72,11 @@ class PRM():
                 self.log[self.index].val = self.log[self.index].proposedVal
             else:
                 self.log[self.index].val = maxVote[3]
+        msg = 'accept|'+str(self.log[self.index].ballotNum)+'|'
+        msg += str(self.log[self.index].val.file)+'|'+self.log[self.index].val.filename #send dict|filename
+        msg += '&'
         for out in self.outgoingTCP:
-            self.outgoingTCP.get(out).sendall(str('accept|'
-                                                  + str(self.log[self.index].ballotNum) +'|'
-                                                  + str(pickle.dumps(self.log[self.index].val))
-                                                  +'&').encode())
+            self.outgoingTCP.get(out).sendall(msg.encode())
             print('sent accept ' + str(self.log[self.index].val) + ' to ' + str(out))
 
     def receiveAll(self):
@@ -117,10 +117,10 @@ class PRM():
                 msg = 'success&'
                 print('sending success to CLI')
                 self.cli_out_s.sendall(msg.encode())
-                continue
-            return
+
         except socket.error:
             return
+        return
 
 
     def receiveMsgs(self, incomingTCP):
@@ -144,7 +144,7 @@ class PRM():
                     else:
                         if (data[0] == 'decide'):
                             print('deciding on ' + data[1])
-                            self.log[self.index].val = int(data[1])
+                            self.log[self.index].val = log(data[2],data[1])
                             self.send_dack(channel)
                             self.decide()
                         # prepare msg looks like this: prepare|ballotNum
@@ -156,8 +156,9 @@ class PRM():
                         if (data[0] == 'accept'):
                             print(str(data) + ' from ' + str(channel))
                             ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
-                            val = pickle.loads(data[2])
-                            self.recvAccept(ballotRcvd,val)
+                            val = self.strToDict(data[2])
+                            filename = data[3]
+                            self.recvAccept(ballotRcvd,val,filename)
             except socket.error:
                 continue
 
@@ -213,6 +214,7 @@ class PRM():
             self.propose(1)
         '''
         print("receiving all")
+        self.majority = (len(self.sites) // 2) + 1
         while True:
             self.receiveAll()
             time.sleep(0.5)
@@ -260,7 +262,7 @@ class PRM():
             print('sent to ' + str(out))
         #self.receiveMsgs(self.incomingTCP)
 
-    def recvAccept(self,ballot,value): # takes in accept msg
+    def recvAccept(self,ballot,value,filename): # takes in accept msg
         b_key = str(ballot)
         if b_key not in self.accepts_dict:
             self.accepts_dict[b_key] = 1
@@ -270,9 +272,9 @@ class PRM():
         if self.compareBallots(ballot,self.log[self.index].ballotNum):
             print("ballot: ",ballot," is greater than: ", self.log[self.index].ballotNum)
             self.log[self.index].acceptNum = ballot
-            self.log[self.index].val = value
-            if self.firstTimeAccept == True:
-                msg = "accept|"+b_key+"|"+ str(value) + "&"
+            self.log[self.index].val = log(filename,value)
+            if self.firstTimeAccept:
+                msg = 'accept|'+b_key+'|'+ str(value) + '|' + filename+ '&'
                 print("from recvAcc, sending accept msg: ",msg)
                 for id in self.outgoingTCP:
                     self.outgoingTCP[id].sendall(msg.encode())
@@ -284,7 +286,8 @@ class PRM():
 
     def decide(self):
         print("deciding on value: ",self.log[self.index].val)
-        msg = "decide|" + str(self.log[self.index].val) + '&'
+        msg = "decide|" + str(self.log[self.index].val.file)+'|'\
+              +self.log[self.index].val.filename + '&'
         num_othersites = len(self.sites) - 1
         self.log[self.index].decided = True
         while len(self.rcvdDacks) != num_othersites:
@@ -294,7 +297,6 @@ class PRM():
             self.receiveMsgs(self.incomingTCP)
         self.reset()
         print("RESETED")
-        quit()
 
     def send_dack(self,channel):
         msg = 'dack|'+ str(self.ID) + '&'
@@ -363,7 +365,8 @@ class PRM():
                 print(filename)
 
 
-
+    def strToDict(self,strang):
+        return ast.literal_eval(strang)
 
 
 
