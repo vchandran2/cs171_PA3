@@ -91,6 +91,7 @@ class PRM():
             print("received from cli")
             data_split = datum.strip().split('&')
             for data in data_split:
+                data = data.split('|')
                 print(data)
                 if self.stopped:
                     if data[0] == 'resume':
