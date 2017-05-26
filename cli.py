@@ -16,7 +16,10 @@ class cli:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(addr)
         s.listen()
-        '''
+        print('attempting to accept')
+        conn, addr_in = s.accept()
+        self.prm_socket_in = conn
+        print("accepted from PRM")
         n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while True:
             try:
@@ -26,12 +29,7 @@ class cli:
             except socket.error:
                 time.sleep(1)
         self.prm_socket_out = n
-        '''
-        print('attempting to accept')
-        conn,addr_in = s.accept()
-        self.prm_socket_in = conn
-        self.prm_socket_out = conn
-        print("accepted from PRM")
+        print("done")
 
 
 

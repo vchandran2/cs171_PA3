@@ -168,7 +168,7 @@ class PRM():
                 time.sleep(1)
         self.cli_out_s = n
         print("attempting to accept")
-        #self.cli_in_s,addr = serversock.accept()
+        self.cli_in_s,addr = serversock.accept()
         print("accepted from cli")
 
 
