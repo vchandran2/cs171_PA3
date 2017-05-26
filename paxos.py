@@ -111,6 +111,7 @@ class Paxos():
         TCP_IP = TCP[0]
         TCP_PORT = int(TCP[1])
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setblocking(0)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         print('trying to bind to ' + str(TCP_IP) + ', ' + str(TCP_PORT))
         s.bind((TCP_IP, TCP_PORT))

@@ -16,6 +16,8 @@ class PRM():
         self.firstTimeAccept = True
         self.rcvdDacks = {} # receive dack (channel:ack)
         self.log = [None]*20 # log of paxos objects
+        self.cli_out_s = None
+        self.cli_in_s =None
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -117,7 +119,7 @@ class PRM():
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         print('trying to bind to ' + str(TCP_IP) + ', ' + str(TCP_PORT))
         s.bind((TCP_IP, TCP_PORT))
-        s.listen(1)
+        s.listen(2)
         print('listening on paxos')
         line = f.readline()
         while (line != ''):
@@ -139,11 +141,10 @@ class PRM():
                         time.sleep(1)
             elif (self.ID == recvr):
                 conn, addr = s.accept()
-                conn.setblocking(0)
                 self.incomingTCP[sender] = conn
             line = f.readline()
-
         # practicing just sending message from ID 1 to all others
+        self.setupCLI(s)
         self.majority = (len(self.sites) // 2) + 1
         if (self.ID == 1):
             self.propose(5)
@@ -153,6 +154,23 @@ class PRM():
             self.propose(1)
         while True:
             self.receiveMsgs(self.incomingTCP)
+
+    def setupCLI(self,serversock):
+        cli_addr = ('127.0.0.1',6000+self.ID)
+        print("setting up cli on addr: ", cli_addr)
+        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        while True:
+            try:
+                n.connect(cli_addr)
+                print("connected to CLI at addr",cli_addr)
+                break
+            except socket.error:
+                time.sleep(1)
+        self.cli_out_s = n
+        print("attempting to accept")
+        #self.cli_in_s,addr = serversock.accept()
+        print("accepted from cli")
+
 
     def compareBallots(self,ballot1,ballot2): # returns true if ballot1 is greater or equal to ballot2
         b1 = str(ballot1[0]) + str(ballot1[1])

@@ -2,52 +2,37 @@ import socket
 import time
 
 class cli:
-    def __init__(self):
+    def __init__(self,ID):
         self.mapsockets = None                # list of outgoing sockets to mappers
         self.reducer_socket = None            # outgoing socket to reducer
         self.prm_socket_out = None                # outgoing socket to prm
         self.prm_socket_in = None
-        self.ID = 5005                     # can be generalized with an argument. for now, this only works for one CLI
+        self.ID = ID                          # can be generalized with an argument. for now, this only works for one CLI
 
     def setup(self):
-        f = open('setupEx', 'r')
-        sitesEx = {}
-        for i in range(5):
-            TCP = f.readline().strip().split()
-            sitesEx[int(TCP[1])] = TCP
-        TCP = sitesEx.get(self.ID)
-        print(TCP)
-        TCP_IP = TCP[0]
-        TCP_PORT = int(TCP[1])
+        addr = ('127.0.0.1',6000+self.ID)
+        addr_out = ('127.0.0.1',5000+self.ID)
+        print("setting up at: ",addr)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        print('trying to bind to ' + str(TCP_IP) + ', ' + str(TCP_PORT))
-        s.bind((TCP_IP, TCP_PORT))
-        s.listen(1)
-        line = f.readline()
-        while (line != ''):
-            line = line.strip().split()
-            sender = int(line[0])
-            recvr = int(line[1])
-            if (self.ID == sender):
-                while True:
-                    try:
-                        TCP = sitesEx.get(recvr)
-                        TCP_IP = TCP[0]
-                        TCP_PORT = int(TCP[1])
-                        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        n.connect((TCP_IP, TCP_PORT))
-                        self.prm_socket_out = n
-                        print('connected to ' + str(recvr))
-                        break
-                    except socket.error:
-                        time.sleep(1)
-            elif (self.ID == recvr):
-                print('trying to accept')
-                conn, addr = s.accept()
-                self.prm_socket_in = conn
-                conn.setblocking(0)
-            line = f.readline()
+        s.bind(addr)
+        s.listen()
+        '''
+        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        while True:
+            try:
+                n.connect(addr_out)
+                print("connected to PRM at addr:",addr_out)
+                break
+            except socket.error:
+                time.sleep(1)
+        self.prm_socket_out = n
+        '''
+        print('attempting to accept')
+        conn,addr_in = s.accept()
+        self.prm_socket_in = conn
+        self.prm_socket_out = conn
+        print("accepted from PRM")
+
 
 
 

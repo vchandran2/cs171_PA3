@@ -4,7 +4,7 @@ from cli import cli
 import sys
 
 def main():
-    trial = cli()
+    trial = cli(int(sys.argv[1]))
     trial.setup()
 
 
