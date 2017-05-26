@@ -64,15 +64,16 @@ class cli:
         while True:
             try:
                 data = self.prm_socket_in.recv(1024).decode()
+                print('received this dank data', data)
                 data_split = data.strip().split('&')
-                for data in data_split:
-                    if len(data) >= 1:
-                        if data[0] == 'success':
-                            print('success!')
-                            return
-                        if data[0] == 'failure':
-                            print('fail!')
-                            return
+                print(len(data))
+                if len(data) >= 1:
+                    if data_split[0] == 'success':
+                        print('success!')
+                        return
+                    if data_split[0] == 'failure':
+                        print('fail!')
+                        return
             except socket.error:
                 continue
             time.sleep(0.5)

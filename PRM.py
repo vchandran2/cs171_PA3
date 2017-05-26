@@ -85,40 +85,45 @@ class PRM():
 
 
     def receiveCLI(self):
-        print("receiving from cli")
+        #print("receiving from cli")
         try:
-            data = self.cli_in_s.recv(1024).decode()
+            datum = self.cli_in_s.recv(1024).decode()
             print("received from cli")
-            data = data.strip().split('&')
-            if self.stopped:
-                if data[0] == 'resume':
+            data_split = datum.strip().split('&')
+            for data in data_split:
+                print(data)
+                if self.stopped:
+                    if data[0] == 'resume':
+                        self.resume()
+                    return
+                elif data[0] == 'replicate':
+                    print("replicate received")
+                    self.replicate(data[1])
+                elif data[0] == 'stop':
+                    self.stop()
+                elif data[0] == 'resume':
                     self.resume()
-                return
-            if data[0] == 'replicate':
-                print("replicate received")
-                self.replicate(data[1])
-            elif data[0] == 'stop':
-                self.stop()
-            elif data[0] == 'resume':
-                self.resume()
-            elif data[0] == 'merge':
-                pos1 = int(data[1])
-                pos2 = int(data[2])
-                self.merge(pos1,pos2)
-            elif data[0] == 'total':
-                pos1 = int(data[1])
-                pos2 = int(data[2])
-                self.total(pos1,pos2)
-            elif data[0] == 'print':
-                self.printdata()
-            msg = 'success&'
-            self.cli_out_s.sendall(msg.encode())
+                elif data[0] == 'merge':
+                    pos1 = int(data[1])
+                    pos2 = int(data[2])
+                    self.merge(pos1,pos2)
+                elif data[0] == 'total':
+                    pos1 = int(data[1])
+                    pos2 = int(data[2])
+                    self.total(pos1,pos2)
+                elif data[0] == 'print':
+                    self.printdata()
+                msg = 'success&'
+                print('sending success to CLI')
+                self.cli_out_s.sendall(msg.encode())
+                continue
+            return
         except socket.error:
             return
 
 
     def receiveMsgs(self, incomingTCP):
-        print("RECEIVING MESSAGES")
+        #print("RECEIVING MESSAGES")
         for channel in incomingTCP:
             try:
             #print("Starting for loop in receiveMSGS. Channel = ",channel)
@@ -342,10 +347,13 @@ class PRM():
         while self.stopped:
             self.receiveAll()
             time.sleep(1)
+        return
+
 
     def resume(self):
         print('resumed')
         self.stopped = False
+        return
 
     def printdata(self):
         for i in self.log:
