@@ -134,6 +134,7 @@ class PRM():
                         TCP_PORT = int(TCP[1])
                         n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         n.connect((TCP_IP, TCP_PORT))
+                        n.setblocking(0)
                         self.outgoingTCP[recvr] = n
                         print('connected to ' + str(recvr))
                         break
@@ -141,6 +142,7 @@ class PRM():
                         time.sleep(1)
             elif (self.ID == recvr):
                 conn, addr = s.accept()
+                conn.setblocking(0)
                 self.incomingTCP[sender] = conn
             line = f.readline()
         # practicing just sending message from ID 1 to all others
@@ -162,6 +164,7 @@ class PRM():
         while True:
             try:
                 n.connect(cli_addr)
+                n.setblocking(0)
                 print("connected to CLI at addr",cli_addr)
                 break
             except socket.error:
@@ -169,6 +172,7 @@ class PRM():
         self.cli_out_s = n
         print("attempting to accept")
         self.cli_in_s,addr = serversock.accept()
+        self.cli_in_s.setblocking(0)
         print("accepted from cli")
 
 
@@ -242,5 +246,41 @@ class PRM():
         self.accepts_dict = {}  # ballotnum:number of accepts
         self.firstTimeAccept = True
         self.rcvdDacks = {}
+
+    def replicate(self):
+        return 0
+    def merge(self):
+        return 0
+    def total(self):
+        return 0
+    def stop(self):
+        return 0
+    def resume(self):
+        return 0
+    def printdata(self):
+        return 0
+
+    def recvFromCli(self):
+        try:
+            data = self.cli_in_s.recv(1024).decode()
+        except socket.error:
+            return
+        data = data.strip().split('&')
+        if data[0] == 'replicate':
+            self.replicate()
+        elif data[0] == 'stop':
+            self.stop()
+        elif data[0] == 'resume':
+            self.resume()
+        elif data[0] == 'merge':
+            self.merge()
+        elif data[0] == 'total':
+            self.total()
+        elif data[0] == 'print':
+            self.printdata()
+
+
+
+
 
 

@@ -18,12 +18,14 @@ class cli:
         s.listen()
         print('attempting to accept')
         conn, addr_in = s.accept()
+        conn.setblocking(0)
         self.prm_socket_in = conn
         print("accepted from PRM")
         n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while True:
             try:
                 n.connect(addr_out)
+                n.setblocking(0)
                 print("connected to PRM at addr:",addr_out)
                 break
             except socket.error:

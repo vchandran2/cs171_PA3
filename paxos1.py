@@ -10,3 +10,4 @@ class Paxos():
         self.val = None # null until a value has been accepted by majority
         self.proposedVal = None # when a process wants to propose a value, it'll be stored here
         self.decided = False
+        self.filename = None
