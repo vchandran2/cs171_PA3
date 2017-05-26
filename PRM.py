@@ -2,13 +2,13 @@ import socket
 import time
 from paxos1 import Paxos
 from log import log
+import pickle
 
 #TODO:
     # create readme
-    # pickle stuff (highest priority)
+    # pickle stuff (done, not tested)
     # make a file and test everything
     # right now CLI can only receive success
-    # right now log size is fixed at 20 need to make it more dynamic
 
 
 class PRM():
@@ -75,7 +75,7 @@ class PRM():
         for out in self.outgoingTCP:
             self.outgoingTCP.get(out).sendall(str('accept|'
                                                   + str(self.log[self.index].ballotNum) +'|'
-                                                  + str(self.log[self.index].val)
+                                                  + str(pickle.dumps(self.log[self.index].val))
                                                   +'&').encode())
             print('sent accept ' + str(self.log[self.index].val) + ' to ' + str(out))
 
@@ -148,7 +148,7 @@ class PRM():
                         if (data[0] == 'accept'):
                             print(str(data) + ' from ' + str(channel))
                             ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
-                            val = int(data[2])
+                            val = pickle.load(data[2])
                             self.recvAccept(ballotRcvd,val)
             except socket.error:
                 continue
