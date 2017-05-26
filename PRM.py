@@ -349,8 +349,8 @@ class PRM():
 
     def printdata(self):
         for i in self.log:
-            if self.log[i] is not None:
-                filename = self.log[i].val.filename
+            if i is not None:
+                filename = i.val.filename
                 print(filename)
 
 
