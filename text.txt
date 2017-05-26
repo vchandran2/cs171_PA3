@@ -1,0 +1,6 @@
+This,8
+college,5
+an,15
+example,8
+are,18
+school,4

@@ -17,7 +17,8 @@ class PRM():
         self.rcvdDacks = {} # receive dack (channel:ack)
         self.log = [None]*20 # log of paxos objects
         self.cli_out_s = None
-        self.cli_in_s =None
+        self.cli_in_s = None
+        self.stopped = False
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -69,12 +70,45 @@ class PRM():
                                                   +'&').encode())
             print('sent accept ' + str(self.log[self.index].val) + ' to ' + str(out))
 
+    def receiveAll(self):
+        while True:
+            self.receiveCLI()
+            self.receiveMsgs(self.incomingTCP)
+
+
+    def receiveCLI(self):
+        try:
+            data = self.cli_in_s.recv(1024).decode()
+            data_split = data.strip().split('&')
+            data_split = list(filter(None, data_split))
+            for data in data_split:
+                data = data.strip().split('|')
+                if data[0] == 'stop':
+                    self.stopped = True
+                elif data[0] == 'resume':
+                    self.stopped = False
+                elif data[0] == 'replicate':
+                    file = data[1]
+                    print ('received replicate', file, 'command')
+                    self.propose(file)
+                elif data[0] == 'merge':
+                    print ('received merge command')
+                elif data[0] == 'print':
+                    print ('received print command')
+                elif data[0] == 'total':
+                    print ('received total command')
+        except socket.error:
+            return
+
+
     def receiveMsgs(self, incomingTCP):
         #print("RECEIVING MESSAGES")
         for channel in incomingTCP:
             try:
             #print("Starting for loop in receiveMSGS. Channel = ",channel)
                 data = incomingTCP.get(channel).recv(1024).decode()
+                if (self.stopped):
+                    break
                 data_split = data.strip().split('&')
                 data_split = list(filter(None, data_split))
                 for data in data_split:
@@ -147,6 +181,7 @@ class PRM():
             line = f.readline()
         # practicing just sending message from ID 1 to all others
         self.setupCLI(s)
+        '''
         self.majority = (len(self.sites) // 2) + 1
         if (self.ID == 1):
             self.propose(5)
@@ -154,8 +189,8 @@ class PRM():
             self.propose(3)
         if (self.ID == 3):
             self.propose(1)
-        while True:
-            self.receiveMsgs(self.incomingTCP)
+        '''
+        self.receiveAll()
 
     def setupCLI(self,serversock):
         cli_addr = ('127.0.0.1',6000+self.ID)

@@ -1,5 +1,6 @@
 import socket
 import time
+from log import log
 
 class cli:
     def __init__(self,ID):
@@ -15,7 +16,7 @@ class cli:
         print("setting up at: ",addr)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(addr)
-        s.listen()
+        s.listen(1)
         print('attempting to accept')
         conn, addr_in = s.accept()
         conn.setblocking(0)
@@ -54,7 +55,7 @@ class cli:
             elif inputstr[0] == 'merge':
                 msg = 'merge&'
             else:
-                print("invalid commmand")
+                print("invalid command")
             self.prm_socket_out.sendall(msg.encode())
             if msg != '':
                 self.wait()
@@ -62,13 +63,16 @@ class cli:
 
     def wait(self):
         while True:
-            data = self.prm_socket_in.recv(1024).decode()
-            data_split = data.strip().split('&')
-            for data in data_split:
-                if len(data) >= 1:
-                    if data[0] == 'success':
-                        print('success!')
-                        return
-                    if data[0] == 'failure':
-                        print('fail!')
-                        return
+            try:
+                data = self.prm_socket_in.recv(1024).decode()
+                data_split = data.strip().split('&')
+                for data in data_split:
+                    if len(data) >= 1:
+                        if data[0] == 'success':
+                            print('success!')
+                            return
+                        if data[0] == 'failure':
+                            print('fail!')
+                            return
+            except socket.error:
+                return
