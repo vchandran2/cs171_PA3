@@ -40,8 +40,9 @@ class cli:
             inputstr = inputstr.strip().split()
             msg = ''
             if inputstr[0] == 'replicate':
-                filename = inputstr[1]
-                msg = 'replicate|'+ filename + '&'
+                if len(inputstr) == 2:
+                    filename = inputstr[1]
+                    msg = 'replicate|'+ filename + '&'
             elif inputstr[0] == 'stop':
                 msg = 'stop&'
             elif inputstr[0] == 'resume':

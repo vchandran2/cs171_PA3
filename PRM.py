@@ -135,7 +135,7 @@ class PRM():
                 data_split = list(filter(None, data_split))
                 for data in data_split:
                     data = data.strip().split('|')
-                    if self.log[self.index].decided == True:
+                    if self.log[self.index] is not None and self.log[self.index].decided == True:
                         if(data[0] == 'dack'):
                             if channel not in self.rcvdDacks:
                                 self.rcvdDacks[channel] = data
