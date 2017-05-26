@@ -1,6 +1,5 @@
 import socket
 import time
-from log import log
 
 class cli:
     def __init__(self,ID):
@@ -48,18 +47,18 @@ class cli:
             elif inputstr[0] == 'resume':
                 msg = 'resume&'
             elif inputstr[0] == 'total':
-                msg = 'total&'
-                return 0
+                if len(inputstr) == 3:
+                    msg = 'total|'+inputstr[1]+'|'+inputstr[2]+'&'
             elif inputstr[0] == 'print':
                 msg = 'print&'
             elif inputstr[0] == 'merge':
-                msg = 'merge&'
+                if len(inputstr) == 3:
+                    msg = 'merge|'+inputstr[1]+'|'+inputstr[2]+'&'
             else:
                 print("invalid command")
             self.prm_socket_out.sendall(msg.encode())
             if msg != '':
                 self.wait()
-            msg = ''
 
     def wait(self):
         while True:
@@ -76,3 +75,4 @@ class cli:
                             return
             except socket.error:
                 return
+            time.sleep(0.5)

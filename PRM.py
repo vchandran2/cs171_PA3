@@ -1,6 +1,15 @@
 import socket
 import time
-import paxos1
+from paxos1 import Paxos
+from log import log
+
+#TODO:
+    # create readme
+    # pickle stuff (highest priority)
+    # make a file and test everything
+    # right now CLI can only receive success
+    # right now log size is fixed at 20 need to make it more dynamic
+
 
 class PRM():
     def __init__(self,ID):
@@ -23,8 +32,8 @@ class PRM():
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
         index = int(data[2])
-        if self.log[index] == None:
-            self.log[index] = paxos1.Paxos(index)
+        if self.log[index] is None:
+            self.log[index] = Paxos(index)
         if self.log[index].decided: # if the object is already decided NO ACK
             return
         print("ballot received: ",ballotRcvd,"index recv: ",index)
@@ -52,14 +61,14 @@ class PRM():
             for vote in self.rcvdVotes:
                 if (self.rcvdVotes[vote][3] != 'None'):
                     ballotRcvd = list(map(int, self.rcvdVotes[vote][1].strip('[]').split(',')))
-                    if (maxVote == None):
+                    if (maxVote is None):
                         maxVote = self.rcvdVotes[vote]
                     elif ((ballotRcvd[0] > list(map(int, maxVote[1].strip('[]').split(',')))[0])
                             | (ballotRcvd[0] == list(map(int, maxVote[1].strip('[]').split(',')))[0])
                             & (ballotRcvd[1] > list(map(int, maxVote[1].strip('[]').split(',')))[1])):
                         maxVote = self.rcvdVotes[vote]
             print('maxVote = ' + str(maxVote))
-            if (maxVote == None):
+            if (maxVote is None):
                 self.log[self.index].val = self.log[self.index].proposedVal
             else:
                 self.log[self.index].val = maxVote[3]
@@ -79,26 +88,31 @@ class PRM():
     def receiveCLI(self):
         try:
             data = self.cli_in_s.recv(1024).decode()
-            data_split = data.strip().split('&')
-            data_split = list(filter(None, data_split))
-            for data in data_split:
-                data = data.strip().split('|')
-                if data[0] == 'stop':
-                    self.stopped = True
-                elif data[0] == 'resume':
-                    self.stopped = False
-                elif data[0] == 'replicate':
-                    file = data[1]
-                    print ('received replicate', file, 'command')
-                    self.propose(file)
-                elif data[0] == 'merge':
-                    print ('received merge command')
-                elif data[0] == 'print':
-                    print ('received print command')
-                elif data[0] == 'total':
-                    print ('received total command')
         except socket.error:
             return
+        data = data.strip().split('&')
+        if self.stopped:
+            if data[0] == 'resume':
+                self.resume()
+            return
+        if data[0] == 'replicate':
+            self.replicate(data[1])
+        elif data[0] == 'stop':
+            self.stop()
+        elif data[0] == 'resume':
+            self.resume()
+        elif data[0] == 'merge':
+            pos1 = int(data[1])
+            pos2 = int(data[2])
+            self.merge(pos1,pos2)
+        elif data[0] == 'total':
+            pos1 = int(data[1])
+            pos2 = int(data[2])
+            self.total(pos1,pos2)
+        elif data[0] == 'print':
+            self.printdata()
+        msg = 'success&'
+        self.cli_out_s.sendall(msg.encode())
 
 
     def receiveMsgs(self, incomingTCP):
@@ -122,7 +136,7 @@ class PRM():
                     else:
                         if (data[0] == 'decide'):
                             print('deciding on ' + data[1])
-                            self.val = int(data[1])
+                            self.log[self.index].val = int(data[1])
                             self.send_dack(channel)
                             self.decide()
                         # prepare msg looks like this: prepare|ballotNum
@@ -221,7 +235,7 @@ class PRM():
         return False
 
     def propose(self, value):               # Done, Not tested
-        paxos_obj = paxos1.Paxos(self.index)
+        paxos_obj = Paxos(self.index)
         self.log.insert(self.index,paxos_obj)
         self.log[self.index].ballotNum[0] += 1
         self.log[self.index].ballotNum[1] = self.ID
@@ -282,37 +296,48 @@ class PRM():
         self.firstTimeAccept = True
         self.rcvdDacks = {}
 
-    def replicate(self):
-        return 0
-    def merge(self):
-        return 0
-    def total(self):
-        return 0
-    def stop(self):
-        return 0
-    def resume(self):
-        return 0
-    def printdata(self):
-        return 0
+    def replicate(self,filename):
+        logobj = log(filename)
+        self.propose(logobj)
+        print('done with replicate method')
 
-    def recvFromCli(self):
-        try:
-            data = self.cli_in_s.recv(1024).decode()
-        except socket.error:
-            return
-        data = data.strip().split('&')
-        if data[0] == 'replicate':
-            self.replicate()
-        elif data[0] == 'stop':
-            self.stop()
-        elif data[0] == 'resume':
-            self.resume()
-        elif data[0] == 'merge':
-            self.merge()
-        elif data[0] == 'total':
-            self.total()
-        elif data[0] == 'print':
-            self.printdata()
+    def merge(self,pos1,pos2):
+        dict1 = self.log[pos1].val.file
+        dict2 = self.log[pos2].val.file
+        combined_dict = {**dict1,**dict2} #python hackery
+        for key in combined_dict:
+            print(key,combined_dict[key])
+        print('end of merge method')
+
+    def total(self,pos1,pos2):
+        total = 0
+        dict1 = self.log[pos1].val.file
+        dict2 = self.log[pos2].val.file
+        for key in dict1:
+            total += dict1[key]
+        for key in dict2:
+            total += dict2[key]
+        print("total: ",total)
+        print('end of total method')
+
+    def stop(self):
+        self.stopped = True
+        print('stopped')
+        while self.stopped:
+            self.receiveAll()
+            time.sleep(1)
+
+    def resume(self):
+        print('resumed')
+        self.stopped = False
+
+    def printdata(self):
+        for i in self.log:
+            if self.log[i] is not None:
+                filename = self.log[i].val.filename
+                print(filename)
+
+
 
 
 

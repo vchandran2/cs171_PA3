@@ -45,7 +45,7 @@ class Paxos():
             for vote in self.rcvdVotes:
                 if (self.rcvdVotes[vote][3] != 'None'):
                     ballotRcvd = list(map(int, self.rcvdVotes[vote][1].strip('[]').split(',')))
-                    if (maxVote == None):
+                    if (maxVote is None):
                         maxVote = self.rcvdVotes[vote]
 
                     elif ((ballotRcvd[0] > list(map(int, maxVote[1].strip('[]').split(',')))[0])
@@ -53,7 +53,7 @@ class Paxos():
                             & (ballotRcvd[1] > list(map(int, maxVote[1].strip('[]').split(',')))[1])):
                         maxVote = self.rcvdVotes[vote]
             print('maxVote = ' + str(maxVote))
-            if (maxVote == None):
+            if (maxVote is None):
                 self.val = self.proposedVal
             else:
                 self.val = maxVote[3]
