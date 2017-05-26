@@ -1,5 +1,4 @@
 from PRM import PRM
-from cli import cli
 import sys
 
 def main():
