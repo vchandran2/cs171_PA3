@@ -45,7 +45,7 @@ class PRM():
             self.outgoingTCP.get(channel).sendall(str('ack|'
                                                   + str(self.log[index].ballotNum) + '|'
                                                   + str(self.log[index].acceptNum) + '|'
-                                                  + str(self.log[index].val)       + '|'
+                                                  + str(self.log[index].val)       + '|' #bug will probably happen
                                                   + str(index)
                                                   +'&').encode())
             print('sent ack ' + str(self.log[index].ballotNum) + ' to ' + str(channel))
@@ -144,6 +144,8 @@ class PRM():
                     else:
                         if (data[0] == 'decide'):
                             print('deciding on ' + data[1])
+                            if self.log[self.index] is None:
+                                self.log.insert(self.index,Paxos(self.index))
                             self.log[self.index].val = log(data[2],data[1])
                             self.send_dack(channel)
                             self.decide()
@@ -204,15 +206,6 @@ class PRM():
             line = f.readline()
         # practicing just sending message from ID 1 to all others
         self.setupCLI(s)
-        '''
-        self.majority = (len(self.sites) // 2) + 1
-        if (self.ID == 1):
-            self.propose(5)
-        if (self.ID == 2):
-            self.propose(3)
-        if (self.ID == 3):
-            self.propose(1)
-        '''
         print("receiving all")
         self.majority = (len(self.sites) // 2) + 1
         while True:
@@ -269,6 +262,8 @@ class PRM():
         else:
             self.accepts_dict[b_key] += 1
         print("received accept: (ballot,value) = ",ballot,",",value)
+        if self.log[self.index] is None:
+            self.log.insert(self.index,Paxos(self.index))
         if self.compareBallots(ballot,self.log[self.index].ballotNum):
             print("ballot: ",ballot," is greater than: ", self.log[self.index].ballotNum)
             self.log[self.index].acceptNum = ballot
