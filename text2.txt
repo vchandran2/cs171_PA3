@@ -1,0 +1,6 @@
+This,8
+college,5
+an,15
+cat,3
+dog,4
+lion,30

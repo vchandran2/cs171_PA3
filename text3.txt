@@ -1,0 +1,4 @@
+art,20
+bike,1
+small,12
+huge,23

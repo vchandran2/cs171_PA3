@@ -5,10 +5,8 @@ from log import log
 import ast
 
 #TODO:
-    # create readme
-    # pickle stuff (done, not tested)
-    # make a file and test everything
-    # right now CLI can only receive success
+    #bugs:
+        #line 48 needs to be changed
 
 
 class PRM():
@@ -22,7 +20,6 @@ class PRM():
         self.sites = {} # all the sites and their TCPs
         self.proposedVal = None # when a process wants to propose a value, it'll be stored here
         self.majority = None
-        self.firstTimeAccept = True
         self.rcvdDacks = {} # receive dack (channel:ack)
         self.log = [None]*20 # log of paxos objects
         self.cli_out_s = None
@@ -72,12 +69,14 @@ class PRM():
                 self.log[self.index].val = self.log[self.index].proposedVal
             else:
                 self.log[self.index].val = maxVote[3]
-        msg = 'accept|'+str(self.log[self.index].ballotNum)+'|'
-        msg += str(self.log[self.index].val.file)+'|'+self.log[self.index].val.filename #send dict|filename
-        msg += '&'
-        for out in self.outgoingTCP:
-            self.outgoingTCP.get(out).sendall(msg.encode())
-            print('sent accept ' + str(self.log[self.index].val) + ' to ' + str(out))
+            msg = 'accept|'+str(self.log[self.index].ballotNum)+'|'
+            msg += str(self.log[self.index].val.file)+'|'+self.log[self.index].val.filename #send dict|filename
+            msg += '&'
+            b_key = str(self.log[self.index].ballotNum)
+            self.accepts_dict[b_key] = 1
+            for out in self.outgoingTCP:
+                self.outgoingTCP.get(out).sendall(msg.encode())
+                print('sent accept ' + str(self.log[self.index].val) + ' to ' + str(out))
 
     def receiveAll(self):
         self.receiveCLI()
@@ -91,33 +90,33 @@ class PRM():
             print("received from cli")
             data_split = datum.strip().split('&')
             for data in data_split:
-                data = data.split('|')
-                print(data)
-                if self.stopped:
-                    if data[0] == 'resume':
+                if data != '':
+                    data = data.split('|')
+                    print(data)
+                    if self.stopped:
+                        if data[0] == 'resume':
+                            self.resume()
+                        return
+                    elif data[0] == 'replicate':
+                        print("replicate received")
+                        self.replicate(data[1])
+                    elif data[0] == 'stop':
+                        self.stop()
+                    elif data[0] == 'resume':
                         self.resume()
-                    return
-                elif data[0] == 'replicate':
-                    print("replicate received")
-                    self.replicate(data[1])
-                elif data[0] == 'stop':
-                    self.stop()
-                elif data[0] == 'resume':
-                    self.resume()
-                elif data[0] == 'merge':
-                    pos1 = int(data[1])
-                    pos2 = int(data[2])
-                    self.merge(pos1,pos2)
-                elif data[0] == 'total':
-                    pos1 = int(data[1])
-                    pos2 = int(data[2])
-                    self.total(pos1,pos2)
-                elif data[0] == 'print':
-                    self.printdata()
-                msg = 'success&'
-                print('sending success to CLI')
-                self.cli_out_s.sendall(msg.encode())
-
+                    elif data[0] == 'merge':
+                        pos1 = int(data[1])
+                        pos2 = int(data[2])
+                        self.merge(pos1,pos2)
+                    elif data[0] == 'total':
+                        pos1 = int(data[1])
+                        pos2 = int(data[2])
+                        self.total(pos1,pos2)
+                    elif data[0] == 'print':
+                        self.printdata()
+                    msg = 'success&'
+                    print('sending success to CLI')
+                    self.cli_out_s.sendall(msg.encode())
         except socket.error:
             return
         return
@@ -137,18 +136,21 @@ class PRM():
                     data = data.strip().split('|')
                     if self.log[self.index] is not None and self.log[self.index].decided == True:
                         if(data[0] == 'dack'):
+                            print('received dack')
                             if channel not in self.rcvdDacks:
                                 self.rcvdDacks[channel] = data
                         if(data[0] == 'decide'):
+                            print('received decide')
                             self.send_dack(channel)
                     else:
                         if (data[0] == 'decide'):
-                            print('deciding on ' + data[1])
-                            if self.log[self.index] is None:
-                                self.log.insert(self.index,Paxos(self.index))
-                            self.log[self.index].val = log(data[2],data[1])
-                            self.send_dack(channel)
-                            self.decide()
+                            if data[3] == str(self.index):
+                                print('received first decide ' + data[1])
+                                if self.log[self.index] is None:
+                                    self.log.insert(self.index,Paxos(self.index))
+                                self.log[self.index].val = log(data[2],data[1])
+                                self.send_dack(channel)
+                                self.decide()
                         # prepare msg looks like this: prepare|ballotNum
                         if (data[0] == 'prepare'):
                             self.rcvPrepare(data, channel)
@@ -268,12 +270,11 @@ class PRM():
             print("ballot: ",ballot," is greater than: ", self.log[self.index].ballotNum)
             self.log[self.index].acceptNum = ballot
             self.log[self.index].val = log(filename,value)
-            if self.firstTimeAccept:
+            if self.accepts_dict[b_key] == 1:
                 msg = 'accept|'+b_key+'|'+ str(value) + '|' + filename+ '&'
                 print("from recvAcc, sending accept msg: ",msg)
                 for id in self.outgoingTCP:
                     self.outgoingTCP[id].sendall(msg.encode())
-                self.firstTimeAccept = False
         print('num for ballot ' + str(b_key) + ':' + str(self.accepts_dict[b_key]) + ' majority: ' + str(self.majority))
         if self.accepts_dict[b_key] == self.majority:
             self.decide()
@@ -282,7 +283,7 @@ class PRM():
     def decide(self):
         print("deciding on value: ",self.log[self.index].val)
         msg = "decide|" + str(self.log[self.index].val.file)+'|'\
-              +self.log[self.index].val.filename + '&'
+              +self.log[self.index].val.filename + '|'+ str(self.index)+ '&'
         num_othersites = len(self.sites) - 1
         self.log[self.index].decided = True
         while len(self.rcvdDacks) != num_othersites:
@@ -301,7 +302,6 @@ class PRM():
         self.index += 1
         self.rcvdVotes = {}  # upon receiving ack, add (channel:acknowledge msg) to this dict. not including mine
         self.accepts_dict = {}  # ballotnum:number of accepts
-        self.firstTimeAccept = True
         self.rcvdDacks = {}
 
     def replicate(self,filename):
