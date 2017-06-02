@@ -7,7 +7,7 @@ import ast
 #TODO:
     # line 48 needs to be changed (done)
     # map and reduce
-    # receive data larger than 1K
+    # receive data larger than 1K (done)
 
 
 class PRM():
@@ -145,7 +145,7 @@ class PRM():
                     try:
                         data += incomingTCP.get(channel).recv(1024).decode().strip()
                     except socket.error:
-                        time.sleep(0.25)
+                        continue
                 if (self.stopped):
                     break
                 data_split = data.strip().split('&')
