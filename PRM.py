@@ -5,8 +5,9 @@ from log import log
 import ast
 
 #TODO:
-    #bugs:
-        #line 48 needs to be changed
+    # line 48 needs to be changed (done)
+    # map and reduce
+    # receive data larger than 1K
 
 
 class PRM():
@@ -39,12 +40,22 @@ class PRM():
             & (ballotRcvd[1] > self.log[index].ballotNum[1])):
             self.index = index
             self.log[index].ballotNum = ballotRcvd
-            self.outgoingTCP.get(channel).sendall(str('ack|'
-                                                  + str(self.log[index].ballotNum) + '|'
-                                                  + str(self.log[index].acceptNum) + '|'
-                                                  + str(self.log[index].val)       + '|' #bug will probably happen
-                                                  + str(index)
-                                                  +'&').encode())
+            if(self.log[index].val is None):
+                self.outgoingTCP.get(channel).sendall(str('ack|'
+                                                      + str(self.log[index].ballotNum) + '|'
+                                                      + str(self.log[index].acceptNum) + '|'
+                                                      + str(self.log[index].val)       + '|' #bug will probably happen
+                                                      + str(index)
+                                                      +'&').encode())
+            else:
+                self.outgoingTCP.get(channel).sendall(str('ack|'
+                                                          + str(self.log[index].ballotNum) + '|'
+                                                          + str(self.log[index].acceptNum) + '|'
+                                                          + str(self.log[index].val) + '|'  # bug will probably happen
+                                                          + str(index) + '|'
+                                                          + str(self.log[index].val.filename) + '|'
+                                                          + str(self.log[index].val.file)
+                                                          + '&').encode())
             print('sent ack ' + str(self.log[index].ballotNum) + ' to ' + str(channel))
 
     def rcvAck(self, data, channel):
@@ -68,7 +79,8 @@ class PRM():
             if (maxVote is None):
                 self.log[self.index].val = self.log[self.index].proposedVal
             else:
-                self.log[self.index].val = maxVote[3]
+                self.log[self.index].val.filename = maxVote[5]
+                self.log[self.index].val.file = maxVote[6]
             msg = 'accept|'+str(self.log[self.index].ballotNum)+'|'
             msg += str(self.log[self.index].val.file)+'|'+self.log[self.index].val.filename #send dict|filename
             msg += '&'
@@ -128,6 +140,12 @@ class PRM():
             try:
             #print("Starting for loop in receiveMSGS. Channel = ",channel)
                 data = incomingTCP.get(channel).recv(1024).decode()
+                data = data.strip()
+                while data[-1] != '&': # if last char in string does not equal & recv again
+                    try:
+                        data += incomingTCP.get(channel).recv(1024).decode().strip()
+                    except socket.error:
+                        time.sleep(0.25)
                 if (self.stopped):
                     break
                 data_split = data.strip().split('&')
