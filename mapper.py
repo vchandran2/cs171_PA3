@@ -22,8 +22,9 @@ class Mapper():
         newfilename = filename[0:-4]+ "_I_"+str(self.ID)+'.txt'
         newfile = open(newfilename,"w")
         for word in self.word_dict:
-            line = word+","+str(self.word_dict[word])+"\n"
-            newfile.write(line)
+            for i in range(int(self.word_dict[word])):
+                line = word+", 1\n"
+                newfile.write(line)
         newfile.close()
 
     def stripWord(self, word):
