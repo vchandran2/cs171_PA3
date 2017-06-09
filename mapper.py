@@ -43,10 +43,11 @@ class Mapper():
         split_file = openfile.strip().split()
         for word in split_file:
             word = self.stripWord(word)
-            if word in self.word_dict:
-                self.word_dict[word] += 1
-            else:
-                self.word_dict[word] = 1
+            if (word != ''):
+                if word in self.word_dict:
+                    self.word_dict[word] += 1
+                else:
+                    self.word_dict[word] = 1
 
     def writeToFile(self,filename):                                       #writes dict to file
         newfilename = filename[0:-4]+ "_I_"+str(self.ID)+'.txt'
