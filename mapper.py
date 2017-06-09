@@ -1,14 +1,44 @@
 import sys
+import socket
+import time
 
+IP = '127.0.0.1'
 class Mapper():
     def __init__(self,IP,portnum,ID):
         self.addr = (IP,int(portnum))
         self.ID = ID
         self.word_dict = {}
+        self.cli_in = None
 
-    def extract(self,filename,offset):                                         #fills the word_dict
-        openfile = open(filename).read()
-        #openfile = openfile[offset:]# self.size??]
+    def setup(self):
+        print("setting up at: ", self.addr)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(self.addr)
+        s.listen(1)
+        print('attempting to accept')
+        conn, addr_in = s.accept()
+        conn.setblocking(0)
+        self.cli_in = conn
+        print("done with setup")
+
+    def receiveMessages(self):
+        while(True):
+            try:
+                datar = self.cli_in.recv(1024).decode()
+            except socket.error:
+                time.sleep(0.25)
+            datar = datar.strip().split('&')
+            for data in datar:
+                data = data.strip().split('|')
+                if len(data) == 3:
+                    filename = data[0]
+                    offset = data[1]
+                    size = data[2]
+                    map(filename,offset,size)
+
+    def extract(self,filename,offset,size):                              #fills the word_dict
+        openfile = open(filename).seek(offset)
+        openfile = openfile.read(size)
         openfile = str.lower(openfile)
         split_file = openfile.strip().split()
         for word in split_file:
@@ -34,7 +64,11 @@ class Mapper():
                 newWord += char
         return newWord
 
-    def map(self,filename,offset):
-        self.extract(filename,offset)
+    def run(self):
+        self.setup()
+        self.receiveMessages()
+
+    def map(self,filename,offset,size):
+        self.extract(filename,offset,size)
         self.writeToFile(filename)
         self.word_dict = {}
