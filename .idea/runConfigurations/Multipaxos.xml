@@ -1,0 +1,20 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Multipaxos" type="CompoundRunConfigurationType" factoryName="Compound Run Configuration">
+    <toRun type="PythonConfigurationType" name="Amapper11" />
+    <toRun type="PythonConfigurationType" name="Amapper12" />
+    <toRun type="PythonConfigurationType" name="Amapper13" />
+    <toRun type="PythonConfigurationType" name="Amapper21" />
+    <toRun type="PythonConfigurationType" name="Amapper22" />
+    <toRun type="PythonConfigurationType" name="Amapper23" />
+    <toRun type="PythonConfigurationType" name="Areducer1" />
+    <toRun type="PythonConfigurationType" name="Areducer2" />
+    <toRun type="PythonConfigurationType" name="Areducer3" />
+    <toRun type="PythonConfigurationType" name="CLI1" />
+    <toRun type="PythonConfigurationType" name="CLI2" />
+    <toRun type="PythonConfigurationType" name="CLI3" />
+    <toRun type="PythonConfigurationType" name="paxos" />
+    <toRun type="PythonConfigurationType" name="paxos2" />
+    <toRun type="PythonConfigurationType" name="paxos3" />
+    <method />
+  </configuration>
+</component>
