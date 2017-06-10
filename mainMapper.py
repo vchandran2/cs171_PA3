@@ -4,7 +4,7 @@ import sys
 def main():
     IP = '127.0.0.1'
     ID = int(sys.argv[1])
-    portnum = 5010 + ID
+    portnum = 5000 + ID
     MAPPER = Mapper(IP,portnum,ID)
     MAPPER.run()
 

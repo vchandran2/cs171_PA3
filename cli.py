@@ -33,7 +33,6 @@ class cli:
             except socket.error:
                 time.sleep(1)
         self.prm_socket_out = n
-
         print("done with setup")
         self.execute_commands()
 
