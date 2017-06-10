@@ -5,9 +5,8 @@ from log import log
 import ast
 
 #TODO:
-    # line 48 needs to be changed (done)
-    # map and reduce
-    # receive data larger than 1K (done)
+    # Reduce needs to receive messages
+    # Test locally, Then set it up on Eucalyptus
 
 
 class PRM():

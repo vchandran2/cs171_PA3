@@ -87,11 +87,16 @@ class cli:
             elif inputstr[0] == 'map':
                 if len(inputstr) == 2:
                     self.mapFile(inputstr[1])
+            elif inputstr[0] == 'reduce':
+                self.reduce()
             else:
                 print("invalid command")
             self.prm_socket_out.sendall(msg.encode())
             if msg != '':
                 self.wait()
+
+    def reduce(self):
+        return 0
 
     def mapFile(self,filename):
         file_size = self.getSize(filename)
