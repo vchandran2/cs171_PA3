@@ -1,8 +1,7 @@
-import sys
 import socket
 import time
 
-IP = '127.0.0.1'
+
 class Mapper():
     def __init__(self,IP,portnum,ID):
         self.addr = (IP,int(portnum))
