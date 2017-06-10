@@ -1,10 +1,37 @@
-import sys
+import time
+import socket
 
 class Reducer():
     def __init__(self, IP, portnum, ID):
         self.addr = (IP, int(portnum))
         self.ID = ID
         self.word_dict = {}
+        self.cli_in = None
+
+    def setup(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(self.addr)
+        s.listen(1)
+        print('attempting to accept')
+        conn, addr_in = s.accept()
+        conn.setblocking(0)
+        self.cli_in = conn
+        print("done with setup")
+
+    def receiveMessages(self):
+        filenames = []
+        while(True):
+            try:
+                datar = self.cli_in.recv(1024).decode()
+                datar = datar.strip().split('&')
+                for data in datar:
+                    print('DOIN STUFF')
+            except socket.error:
+                time.sleep(0.25)
+
+    def run(self):
+        self.setup()
+        self.receiveMessages()
 
     def extract(self,filenames):
         filenames = filenames.strip().split()

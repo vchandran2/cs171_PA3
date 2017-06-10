@@ -5,7 +5,7 @@ import os
 
 class cli:
     def __init__(self,ID):
-        self.mapsockets = None                # list of outgoing sockets to mappers
+        self.mapsockets = []                # list of outgoing sockets to mappers
         self.reducer_socket = None            # outgoing socket to reducer
         self.prm_socket_out = None                # outgoing socket to prm
         self.prm_socket_in = None
@@ -33,8 +33,35 @@ class cli:
             except socket.error:
                 time.sleep(1)
         self.prm_socket_out = n
+        self.connectToMappers()
+        self.connectToReducer()
         print("done with setup")
         self.execute_commands()
+
+    def connectToMappers(self):
+        addrs = []
+        addrs.append(('127.0.0.1',5010 +self.ID))
+        addrs.append(('127.0.0.1',5020+self.ID))
+        for addr_out in addrs:
+            n = self.connectTo(addr_out)
+            self.mapsockets.append(n)
+
+    def connectToReducer(self):
+        addr = (('127.0.0.1',5100 + self.ID))
+        self.reducer_socket = self.connectTo(addr)
+
+    def connectTo(self,addr_out):
+        n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print('connecting to', addr_out)
+        while True:
+            try:
+                n.connect(addr_out)
+                n.setblocking(0)
+                print("connected at addr:", addr_out)
+                break
+            except socket.error:
+                time.sleep(0.25)
+        return n
 
     def execute_commands(self):
         while True:
@@ -58,7 +85,8 @@ class cli:
                 if len(inputstr) == 3:
                     msg = 'merge|'+inputstr[1]+'|'+inputstr[2]+'&'
             elif inputstr[0] == 'map':
-                self.mapFile(inputstr[1])
+                if len(inputstr) == 2:
+                    self.mapFile(inputstr[1])
             else:
                 print("invalid command")
             self.prm_socket_out.sendall(msg.encode())

@@ -22,18 +22,20 @@ class Mapper():
 
     def receiveMessages(self):
         while(True):
+            print('receiveing messages')
             try:
                 datar = self.cli_in.recv(1024).decode()
+                datar = datar.strip().split('&')
+                for data in datar:
+                    data = data.strip().split('|')
+                    if len(data) == 3:
+                        filename = data[0]
+                        offset = data[1]
+                        size = data[2]
+                        self.map(filename, offset, size)
             except socket.error:
                 time.sleep(0.25)
-            datar = datar.strip().split('&')
-            for data in datar:
-                data = data.strip().split('|')
-                if len(data) == 3:
-                    filename = data[0]
-                    offset = data[1]
-                    size = data[2]
-                    map(filename,offset,size)
+
 
     def extract(self,filename,offset,size):                              #fills the word_dict
         openfile = open(filename).seek(offset)
