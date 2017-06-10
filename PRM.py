@@ -8,7 +8,7 @@ import ast
     # Reduce needs to receive messages
     # Test locally, Then set it up on Eucalyptus
 
-
+IP_local = '127.0.0.1'
 class PRM():
     def __init__(self,ID):
         self.rcvdVotes = {}     # upon receiving ack, add (channel:acknowledge msg) to this dict. not including mine
@@ -232,7 +232,7 @@ class PRM():
             time.sleep(0.5)
 
     def setupCLI(self,serversock):
-        cli_addr = ('127.0.0.1',6000+self.ID)
+        cli_addr = (IP_local,6000+self.ID)
         print("setting up cli on addr: ", cli_addr)
         n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while True:

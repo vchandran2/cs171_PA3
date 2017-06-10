@@ -2,7 +2,7 @@ import socket
 import time
 import os
 
-
+IP = '127.0.0.1' # IP of the SITE
 class cli:
     def __init__(self,ID):
         self.mapsockets = []                # list of outgoing sockets to mappers
@@ -12,8 +12,8 @@ class cli:
         self.ID = ID                          # can be generalized with an argument. for now, this only works for one CLI
 
     def setup(self):
-        addr = ('127.0.0.1',6000+self.ID)
-        addr_out = ('127.0.0.1',5000+self.ID)
+        addr = (IP,6000+self.ID)
+        addr_out = (IP,5000+self.ID)
         print("setting up at: ",addr)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(addr)
@@ -40,14 +40,14 @@ class cli:
 
     def connectToMappers(self):
         addrs = []
-        addrs.append(('127.0.0.1',5010 +self.ID))
-        addrs.append(('127.0.0.1',5020+self.ID))
+        addrs.append((IP,5010 +self.ID))
+        addrs.append((IP,5020+self.ID))
         for addr_out in addrs:
             n = self.connectTo(addr_out)
             self.mapsockets.append(n)
 
     def connectToReducer(self):
-        addr = (('127.0.0.1',5100 + self.ID))
+        addr = ((IP,5100 + self.ID))
         self.reducer_socket = self.connectTo(addr)
 
     def connectTo(self,addr_out):
