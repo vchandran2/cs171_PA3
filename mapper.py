@@ -25,6 +25,7 @@ class Mapper():
             try:
                 datar = self.cli_in.recv(1024).decode()
                 datar = datar.strip().split('&')
+                print(datar)
                 for data in datar:
                     data = data.strip().split('|')
                     if len(data) == 3:
@@ -51,7 +52,7 @@ class Mapper():
                     self.word_dict[word] = 1
 
     def writeToFile(self,filename):                                       #writes dict to file
-        newfilename = filename[0:-4]+ "_I_"+str(self.ID)+'.txt'
+        newfilename = filename[0:-4]+ "_I_"+str(self.ID)[-2]+'.txt'
         newfile = open(newfilename,"w")
         for word in self.word_dict:
             for i in range(int(self.word_dict[word])):
@@ -71,6 +72,7 @@ class Mapper():
         self.receiveMessages()
 
     def map(self,filename,offset,size):
+        print('starting to map', filename)
         self.extract(filename,offset,size)
         self.writeToFile(filename)
         self.word_dict = {}

@@ -85,18 +85,18 @@ class cli:
                 if len(inputstr) == 3:
                     msg = 'merge|'+inputstr[1]+'|'+inputstr[2]+'&'
             elif inputstr[0] == 'map':
-                if len(inputstr) == 2:
+                if len(inputstr) == 4:
                     self.mapFile(inputstr[1])
             elif inputstr[0] == 'reduce':
-                self.reduce()
+                if len(inputstr) == 3:
+                    print(inputstr)
+                    reduceMsg = 'reduce|'+inputstr[1]+'|'+inputstr[2]+'&'
+                    self.reducer_socket.sendall(reduceMsg.encode())
             else:
                 print("invalid command")
             self.prm_socket_out.sendall(msg.encode())
             if msg != '':
                 self.wait()
-
-    def reduce(self):
-        return 0
 
     def mapFile(self,filename):
         file_size = self.getSize(filename)

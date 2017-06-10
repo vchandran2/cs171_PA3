@@ -25,7 +25,12 @@ class Reducer():
                 datar = self.cli_in.recv(1024).decode()
                 datar = datar.strip().split('&')
                 for data in datar:
-                    print('DOIN STUFF')
+                    data = data.strip().split('|')
+                    filenames = data[1:3]
+                    if (data[0] == 'reduce'):
+                        break
+                print(filenames)
+                self.reduce(filenames)
             except socket.error:
                 time.sleep(0.25)
 
@@ -34,7 +39,6 @@ class Reducer():
         self.receiveMessages()
 
     def extract(self,filenames):
-        filenames = filenames.strip().split()
         for filename in filenames:
             #fills the word_dict
             openfile = open(filename).read()
@@ -49,9 +53,9 @@ class Reducer():
                     else:
                         self.word_dict[word] = 1
 
-    def writeToFile(self,filenames):                                       #writes dict to file
-        filenames = filenames.strip().split()
-        newfilename = filenames[0][0:-4]+ '_reduced.txt'
+    def writeToFile(self,filenames):                                       # writes dict to file
+        print(filenames)
+        newfilename = filenames[0][0:-8]+ '_reduced.txt'
         newfile = open(newfilename,"w")
         for word in self.word_dict:
             line = word+", "+str(self.word_dict[word])+"\n"
@@ -66,6 +70,7 @@ class Reducer():
         return newWord
 
     def reduce(self,filenames):
+        print('starting to reduce')
         self.extract(filenames)
         self.writeToFile(filenames)
         self.word_dict = {}
