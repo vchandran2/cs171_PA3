@@ -22,7 +22,6 @@ class Mapper():
 
     def receiveMessages(self):
         while(True):
-            print('receiveing messages')
             try:
                 datar = self.cli_in.recv(1024).decode()
                 datar = datar.strip().split('&')
@@ -38,8 +37,9 @@ class Mapper():
 
 
     def extract(self,filename,offset,size):                              #fills the word_dict
-        openfile = open(filename).seek(offset)
-        openfile = openfile.read(size)
+        openfile = open(filename)
+        openfile.seek(int(offset))
+        openfile = openfile.read(int(size))
         openfile = str.lower(openfile)
         split_file = openfile.strip().split()
         for word in split_file:
