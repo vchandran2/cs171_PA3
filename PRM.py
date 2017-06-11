@@ -112,24 +112,24 @@ class PRM():
                     if self.stopped:
                         if data[0] == 'resume':
                             self.resume()
-                        return
-                    elif data[0] == 'replicate':
-                        print("replicate received")
-                        self.replicate(data[1])
-                    elif data[0] == 'stop':
-                        self.stop()
-                    elif data[0] == 'resume':
-                        self.resume()
-                    elif data[0] == 'merge':
-                        pos1 = int(data[1])
-                        pos2 = int(data[2])
-                        self.merge(pos1,pos2)
-                    elif data[0] == 'total':
-                        pos1 = int(data[1])
-                        pos2 = int(data[2])
-                        self.total(pos1,pos2)
-                    elif data[0] == 'print':
-                        self.printdata()
+                    else:
+                        if data[0] == 'replicate':
+                            print("replicate received")
+                            self.replicate(data[1])
+                        elif data[0] == 'stop':
+                            self.stop()
+                        elif data[0] == 'resume':
+                            self.resume()
+                        elif data[0] == 'merge':
+                            pos1 = int(data[1])
+                            pos2 = int(data[2])
+                            self.merge(pos1,pos2)
+                        elif data[0] == 'total':
+                            pos1 = int(data[1])
+                            pos2 = int(data[2])
+                            self.total(pos1,pos2)
+                        elif data[0] == 'print':
+                            self.printdata()
                     msg = 'success&'
                     print('sending success to CLI')
                     self.cli_out_s.sendall(msg.encode())
@@ -329,6 +329,8 @@ class PRM():
         self.accepts_dict = {}  # ballotnum:number of accepts
         self.rcvdDacks = {}
 
+
+
     def replicate(self,filename):
         print("replicating")
         logobj = log(filename)
@@ -367,9 +369,6 @@ class PRM():
     def stop(self):
         self.stopped = True
         print('stopped')
-        while self.stopped:
-            self.receiveAll()
-            time.sleep(1)
         return
 
 
