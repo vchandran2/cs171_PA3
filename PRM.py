@@ -58,38 +58,41 @@ class PRM():
             print('sent ack (bal, val) ' + str(self.log[index].ballotNum) +', '+ str(self.log[index].val) + ' to ' + str(channel))
 
     def rcvAck(self, data, channel):
-        majority = (len(self.sites) // 2) + 1
-        self.rcvdVotes[channel] = data
-        print('received Ack from: ',channel)
-        # if the number of rcvdVotes plus mine is a majority
-        if (len(self.rcvdVotes) + 1 == majority):
-            print('received majority of ACKS')
-            # if all received values are None, then we set my val to my proposedVal
-            # if not, then we set my val to the val that we received with the highest ballot
-            maxVote = None
-            for vote in self.rcvdVotes:
-                if (self.rcvdVotes[vote][3] != 'None'):
-                    ballotRcvd = list(map(int, self.rcvdVotes[vote][1].strip('[]').split(',')))
-                    if (maxVote is None):
-                        maxVote = self.rcvdVotes[vote]
-                    elif ((ballotRcvd[0] > list(map(int, maxVote[1].strip('[]').split(',')))[0])
-                            | (ballotRcvd[0] == list(map(int, maxVote[1].strip('[]').split(',')))[0])
-                            & (ballotRcvd[1] > list(map(int, maxVote[1].strip('[]').split(',')))[1])):
-                        maxVote = self.rcvdVotes[vote]
-            print('maxVote = ' + str(maxVote))
-            if (maxVote is None):
-                self.log[self.index].val = self.log[self.index].proposedVal
-            else:
-                self.log[self.index].val.filename = maxVote[5]
-                self.log[self.index].val.file = maxVote[6]
-            msg = 'accept|'+str(self.log[self.index].ballotNum)+'|'
-            msg += str(self.log[self.index].val.file)+'|'+self.log[self.index].val.filename #send dict|filename
-            msg += '&'
-            b_key = str(self.log[self.index].ballotNum)
-            self.accepts_dict[b_key] = 1
-            for out in self.outgoingTCP:
-                self.outgoingTCP.get(out).sendall(msg.encode())
-                print('sent '+ msg + ' to ' + str(out))
+        ballot = data[1]
+        ballot = list(map(int, ballot.strip('[]').split(',')))
+        if self.compareBallots(ballot, self.log[self.index].ballotNum):
+            majority = (len(self.sites) // 2) + 1
+            self.rcvdVotes[channel] = data
+            print('received Ack from: ', channel)
+            # if the number of rcvdVotes plus mine is a majority
+            if (len(self.rcvdVotes) + 1 == majority):
+                print('received majority of ACKS')
+                # if all received values are None, then we set my val to my proposedVal
+                # if not, then we set my val to the val that we received with the highest ballot
+                maxVote = None
+                for vote in self.rcvdVotes:
+                    if (self.rcvdVotes[vote][3] != 'None'):
+                        ballotRcvd = list(map(int, self.rcvdVotes[vote][1].strip('[]').split(',')))
+                        if (maxVote is None):
+                            maxVote = self.rcvdVotes[vote]
+                        elif ((ballotRcvd[0] > list(map(int, maxVote[1].strip('[]').split(',')))[0])
+                                | (ballotRcvd[0] == list(map(int, maxVote[1].strip('[]').split(',')))[0])
+                                & (ballotRcvd[1] > list(map(int, maxVote[1].strip('[]').split(',')))[1])):
+                            maxVote = self.rcvdVotes[vote]
+                print('maxVote = ' + str(maxVote))
+                if (maxVote is None):
+                    self.log[self.index].val = self.log[self.index].proposedVal
+                else:
+                    self.log[self.index].val.filename = maxVote[5]
+                    self.log[self.index].val.file = maxVote[6]
+                msg = 'accept|'+str(self.log[self.index].ballotNum)+'|'
+                msg += str(self.log[self.index].val.file)+'|'+self.log[self.index].val.filename #send dict|filename
+                msg += '&'
+                b_key = str(self.log[self.index].ballotNum)
+                self.accepts_dict[b_key] = 1
+                for out in self.outgoingTCP:
+                    self.outgoingTCP.get(out).sendall(msg.encode())
+                    print('sent '+ msg + ' to ' + str(out))
 
     def receiveAll(self):
         self.receiveCLI()
