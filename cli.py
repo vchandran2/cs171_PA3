@@ -65,6 +65,7 @@ class cli:
 
     def execute_commands(self):
         while True:
+            data = self.prm_socket_in.recv(1024).decode()
             inputstr = input("Enter command: ")
             inputstr = inputstr.strip().split()
             msg = ''
@@ -133,4 +134,3 @@ class cli:
                         return
             except socket.error:
                 continue
-            time.sleep(0.5)
