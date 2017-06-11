@@ -33,7 +33,7 @@ class PRM():
             self.log[index] = Paxos(index)
         if self.log[index].decided: # if the object is already decided NO ACK
             return
-        print("ballot received: ",ballotRcvd,"index recv: ",index)
+        print("(received prepare) ballot received: ",ballotRcvd,"index recv: ",index,"from: ",channel)
         if ((ballotRcvd[0] > self.log[index].ballotNum[0])
             | (ballotRcvd[0] == self.log[index].ballotNum[0])
             & (ballotRcvd[1] > self.log[index].ballotNum[1])):
@@ -60,8 +60,10 @@ class PRM():
     def rcvAck(self, data, channel):
         majority = (len(self.sites) // 2) + 1
         self.rcvdVotes[channel] = data
+        print('received Ack from: ',channel)
         # if the number of rcvdVotes plus mine is a majority
         if (len(self.rcvdVotes) + 1 == majority):
+            print('received majority of ACKS')
             # if all received values are None, then we set my val to my proposedVal
             # if not, then we set my val to the val that we received with the highest ballot
             maxVote = None
@@ -87,7 +89,7 @@ class PRM():
             self.accepts_dict[b_key] = 1
             for out in self.outgoingTCP:
                 self.outgoingTCP.get(out).sendall(msg.encode())
-                print('sent accept ' + str(self.log[self.index].val) + ' to ' + str(out))
+                print('sent '+ msg + ' to ' + str(out))
 
     def receiveAll(self):
         self.receiveCLI()
@@ -265,13 +267,14 @@ class PRM():
         self.log[self.index].ballotNum[0] += 1
         self.log[self.index].ballotNum[1] = self.ID
         self.log[self.index].proposedVal = value
-        for out in self.outgoingTCP:
-            self.outgoingTCP.get(out).sendall(str('prepare|'
+        msg = str('prepare|'
                                                   + str(self.log[self.index].ballotNum) + '|'
                                                   + str(self.index)
                                                   + '&'
-                                                  ).encode())
-            print('sent to ' + str(out))
+                                                  )
+        for out in self.outgoingTCP:
+            self.outgoingTCP.get(out).sendall(msg.encode())
+            print('sent ',msg, 'to ', str(out))
         #self.receiveMsgs(self.incomingTCP)
 
     def recvAccept(self,ballot,value,filename): # takes in accept msg
