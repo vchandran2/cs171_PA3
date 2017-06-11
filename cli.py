@@ -85,7 +85,7 @@ class cli:
                 if len(inputstr) == 3:
                     msg = 'merge|'+inputstr[1]+'|'+inputstr[2]+'&'
             elif inputstr[0] == 'map':
-                if len(inputstr) == 4:
+                if len(inputstr) == 2:
                     self.mapFile(inputstr[1])
             elif inputstr[0] == 'reduce':
                 if len(inputstr) == 3:
