@@ -25,8 +25,8 @@ class PRM():
         self.cli_out_s = None
         self.cli_in_s = None
         self.stopped = False
-        #self.waitingCounter
-        #self.waiting
+        self.waitingCounter = 0
+        self.waiting = False
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -57,6 +57,7 @@ class PRM():
                                                           + str(self.log[index].val.filename) + '|'
                                                           + str(self.log[index].val.file)
                                                           + '&').encode())
+            self.waiting = True
             print('sent ack (bal, val) ' + str(self.log[index].ballotNum) +', '+ str(self.log[index].val) + ' to ' + str(channel))
 
     def rcvAck(self, data, channel):
@@ -95,12 +96,25 @@ class PRM():
                 for out in self.outgoingTCP:
                     self.outgoingTCP.get(out).sendall(msg.encode())
                     print('sent '+ msg + ' to ' + str(out))
+                self.waiting = True
 
     def receiveAll(self):
+        if self.waiting:
+            print('waiting: ',self.waitingCounter)
+            self.waitingCounter += 1
+        if self.waitingCounter == 45:
+            self.fail()
         self.receiveCLI()
         self.receiveMsgs(self.incomingTCP)
-        #time.sleep(0.1)
+        time.sleep(0.1)
 
+    def fail(self):
+        print('failure')
+        self.log[self.index] = None
+        self.waiting = False
+        self.waitingCounter = 0
+        msg = 'failure&'
+        self.cli_out_s.sendall(msg.encode())
 
     def receiveCLI(self):
         #print("receiving from cli")
@@ -162,6 +176,10 @@ class PRM():
                         continue
                 if (self.stopped):
                     break
+                if data != '':
+                    print('waiting == false, waiting counter == 0')
+                    self.waiting = False
+                    self.waitingCounter = 0
                 data_split = data.strip().split('&')
                 data_split = list(filter(None, data_split))
                 for data in data_split:
@@ -290,6 +308,7 @@ class PRM():
         for out in self.outgoingTCP:
             self.outgoingTCP.get(out).sendall(msg.encode())
             print('sent ',msg, 'to ', str(out))
+        self.waiting = True
         #self.receiveMsgs(self.incomingTCP)
 
     def recvAccept(self,ballot,value,filename): # takes in accept msg
@@ -310,6 +329,7 @@ class PRM():
                 print("from recvAcc, sending accept msg: ",msg)
                 for id in self.outgoingTCP:
                     self.outgoingTCP[id].sendall(msg.encode())
+                self.waiting =True
         print('num for ballot ' + str(b_key) + ':' + str(self.accepts_dict[b_key]) + ' majority: ' + str(self.majority))
         if self.accepts_dict[b_key] == self.majority:
             self.decide()
@@ -324,6 +344,7 @@ class PRM():
         while len(self.rcvdDacks) != num_othersites:
             for id in self.outgoingTCP:
                 self.outgoingTCP[id].sendall(msg.encode())
+            self.waiting = True
             time.sleep(1)
             self.receiveMsgs(self.incomingTCP)
         self.reset()
@@ -333,6 +354,7 @@ class PRM():
     def send_dack(self,channel):
         msg = 'dack|'+ str(self.ID) + '&'
         self.outgoingTCP[channel].sendall(msg.encode())
+        self.waiting = True
 
     def reset(self):
         self.index += 1
