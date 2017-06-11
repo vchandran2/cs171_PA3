@@ -55,7 +55,7 @@ class PRM():
                                                           + str(self.log[index].val.filename) + '|'
                                                           + str(self.log[index].val.file)
                                                           + '&').encode())
-            print('sent ack ' + str(self.log[index].ballotNum) + ' to ' + str(channel))
+            print('sent ack (bal, val) ' + str(self.log[index].ballotNum) +', '+ str(self.log[index].val) + ' to ' + str(channel))
 
     def rcvAck(self, data, channel):
         majority = (len(self.sites) // 2) + 1
@@ -155,16 +155,16 @@ class PRM():
                     data = data.strip().split('|')
                     if self.log[self.index] is not None and self.log[self.index].decided == True:
                         if(data[0] == 'dack'):
-                            print('received dack')
+                            print('received dack from', channel)
                             if channel not in self.rcvdDacks:
                                 self.rcvdDacks[channel] = data
                         if(data[0] == 'decide'):
-                            print('received decide')
+                            print('received decide from', channel)
                             self.send_dack(channel)
                     else:
                         if (data[0] == 'decide'):
                             if data[3] == str(self.index):
-                                print('received first decide ' + data[1])
+                                print('received first decide from', channel, 'data:', data[1])
                                 if self.log[self.index] is None:
                                     self.log.insert(self.index,Paxos(self.index))
                                 self.log[self.index].val = log(data[2],data[1])
@@ -172,12 +172,14 @@ class PRM():
                                 self.decide()
                         # prepare msg looks like this: prepare|ballotNum
                         if (data[0] == 'prepare'):
+                            print('received prepare from', channel)
                             self.rcvPrepare(data, channel)
                         # ack msg looks like this: ack|ballotNum|acceptNum|val
                         if (data[0] == 'ack'):
+                            print('received ack from', channel)
                             self.rcvAck(data, channel)
                         if (data[0] == 'accept'):
-                            print(str(data) + ' from ' + str(channel))
+                            print('received '+ str(data) + ' from ' + str(channel))
                             ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
                             val = self.strToDict(data[2])
                             filename = data[3]
