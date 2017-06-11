@@ -84,7 +84,7 @@ class PRM():
                     self.log[self.index].val = self.log[self.index].proposedVal
                 else:
                     self.log[self.index].val.filename = maxVote[5]
-                    self.log[self.index].val.file = maxVote[6]
+                    self.log[self.index].val.file = self.strToDict(maxVote[6])
                 msg = 'accept|'+str(self.log[self.index].ballotNum)+'|'
                 msg += str(self.log[self.index].val.file)+'|'+self.log[self.index].val.filename #send dict|filename
                 msg += '&'
