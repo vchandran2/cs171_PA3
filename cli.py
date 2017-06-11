@@ -65,7 +65,11 @@ class cli:
 
     def execute_commands(self):
         while True:
-            data = self.prm_socket_in.recv(1024).decode()
+            try:
+                print('try')
+                data = self.prm_socket_in.recv(1024).decode()
+            except socket.error:
+                pass
             inputstr = input("Enter command: ")
             inputstr = inputstr.strip().split()
             msg = ''
