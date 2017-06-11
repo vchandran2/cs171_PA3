@@ -21,10 +21,12 @@ class PRM():
         self.proposedVal = None # when a process wants to propose a value, it'll be stored here
         self.majority = None
         self.rcvdDacks = {} # receive dack (channel:ack)
-        self.log = [None]*20 # log of paxos objects
+        self.log = [None]*100 # log of paxos objects
         self.cli_out_s = None
         self.cli_in_s = None
         self.stopped = False
+        #self.waitingCounter
+        #self.waiting
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -97,6 +99,7 @@ class PRM():
     def receiveAll(self):
         self.receiveCLI()
         self.receiveMsgs(self.incomingTCP)
+        #time.sleep(0.1)
 
 
     def receiveCLI(self):
@@ -112,37 +115,44 @@ class PRM():
                     if self.stopped:
                         if data[0] == 'resume':
                             self.resume()
+                            self.sendSuccessToCLI()
                     else:
                         if data[0] == 'replicate':
                             print("replicate received")
                             self.replicate(data[1])
                         elif data[0] == 'stop':
                             self.stop()
+                            self.sendSuccessToCLI()
                         elif data[0] == 'resume':
                             self.resume()
+                            self.sendSuccessToCLI()
                         elif data[0] == 'merge':
                             pos1 = int(data[1])
                             pos2 = int(data[2])
                             self.merge(pos1,pos2)
+                            self.sendSuccessToCLI()
                         elif data[0] == 'total':
                             pos1 = int(data[1])
                             pos2 = int(data[2])
                             self.total(pos1,pos2)
+                            self.sendSuccessToCLI()
                         elif data[0] == 'print':
                             self.printdata()
-                    msg = 'success&'
-                    print('sending success to CLI')
-                    self.cli_out_s.sendall(msg.encode())
+                            self.sendSuccessToCLI()
+                    #self.sendSuccessToCLI()
         except socket.error:
             return
         return
 
+    def sendSuccessToCLI(self):
+        msg = 'success&'
+        print('sending success to CLI')
+        self.cli_out_s.sendall(msg.encode())
+
 
     def receiveMsgs(self, incomingTCP):
-        #print("RECEIVING MESSAGES")
         for channel in incomingTCP:
             try:
-            #print("Starting for loop in receiveMSGS. Channel = ",channel)
                 data = incomingTCP.get(channel).recv(1024).decode()
                 data = data.strip()
                 while data[-1] != '&': # if last char in string does not equal & recv again
@@ -318,6 +328,7 @@ class PRM():
             self.receiveMsgs(self.incomingTCP)
         self.reset()
         print("RESETED")
+        self.sendSuccessToCLI()
 
     def send_dack(self,channel):
         msg = 'dack|'+ str(self.ID) + '&'

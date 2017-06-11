@@ -58,6 +58,7 @@ class Mapper():
             for i in range(int(self.word_dict[word])):
                 line = word+", 1\n"
                 newfile.write(line)
+        print('mapped file:',newfilename)
         newfile.close()
 
     def stripWord(self, word):
