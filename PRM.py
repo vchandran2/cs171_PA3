@@ -102,7 +102,7 @@ class PRM():
         if self.waiting:
             print('waiting: ',self.waitingCounter)
             self.waitingCounter += 1
-        if self.waitingCounter == 45:
+        if self.waitingCounter == 20:
             self.fail()
         self.receiveCLI()
         self.receiveMsgs(self.incomingTCP)
@@ -329,7 +329,7 @@ class PRM():
                 print("from recvAcc, sending accept msg: ",msg)
                 for id in self.outgoingTCP:
                     self.outgoingTCP[id].sendall(msg.encode())
-                self.waiting =True
+                self.waiting = True
         print('num for ballot ' + str(b_key) + ':' + str(self.accepts_dict[b_key]) + ' majority: ' + str(self.majority))
         if self.accepts_dict[b_key] == self.majority:
             self.decide()
@@ -344,7 +344,7 @@ class PRM():
         while len(self.rcvdDacks) != num_othersites:
             for id in self.outgoingTCP:
                 self.outgoingTCP[id].sendall(msg.encode())
-            self.waiting = True
+         #  self.waiting = True
             time.sleep(1)
             self.receiveMsgs(self.incomingTCP)
         self.reset()
@@ -352,9 +352,10 @@ class PRM():
         self.sendSuccessToCLI()
 
     def send_dack(self,channel):
+
         msg = 'dack|'+ str(self.ID) + '&'
         self.outgoingTCP[channel].sendall(msg.encode())
-        self.waiting = True
+        # self.waiting = True
 
     def reset(self):
         self.index += 1

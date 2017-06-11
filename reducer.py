@@ -55,7 +55,7 @@ class Reducer():
 
     def writeToFile(self,filenames):                                       # writes dict to file
         print(filenames)
-        newfilename = filenames[0][0:-8]+ 'reduced.txt'
+        newfilename = filenames[0][0:-8]+ '_reduced.txt'
         newfile = open(newfilename,"w")
         for word in self.word_dict:
             line = word+", "+str(self.word_dict[word])+"\n"
