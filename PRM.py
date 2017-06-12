@@ -104,7 +104,7 @@ class PRM():
                 self.accepts_dict[b_key] = 1
                 for out in self.outgoingTCP:
                     self.sendMessage(self.outgoingTCP.get(out),msg)
-                    print('sent '+ msg + ' to ' + str(out))
+                    # print('sent '+ msg + ' to ' + str(out))
                 self.waiting = True
 
     def receiveAll(self):
@@ -224,7 +224,7 @@ class PRM():
                             print('received ack from', channel)
                             self.rcvAck(data, channel)
                         if (data[0] == 'accept'):
-                            print('received '+ str(data) + ' from ' + str(channel))
+                            # print('received '+ str(data) + ' from ' + str(channel))
                             ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
                             val = self.strToDict(data[2])
                             filename = data[3]

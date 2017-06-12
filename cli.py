@@ -130,10 +130,10 @@ class cli:
                 # print('length of data:',len(data))
                 if len(data) >= 1:
                     if data_split[0] == 'success':
-                        print('success!')
+                        #print('success!')
                         return
                     if data_split[0] == 'failure':
-                        print('fail!')
+                        #print('fail!')
                         return
             except socket.error:
                 continue
