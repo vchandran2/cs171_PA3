@@ -125,9 +125,9 @@ class cli:
         while True:
             try:
                 data = self.prm_socket_in.recv(1024).decode()
-                print('received this dank data', data)
+                # print('received this dank data', data)
                 data_split = data.strip().split('&')
-                print('length of data:',len(data))
+                # print('length of data:',len(data))
                 if len(data) >= 1:
                     if data_split[0] == 'success':
                         print('success!')

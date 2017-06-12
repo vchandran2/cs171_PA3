@@ -67,7 +67,7 @@ class PRM():
                                                           + str(self.log[index].val.file)
                                                           + '&'))
             self.waiting = True
-            print('sent ack (bal, val) ' + str(self.log[index].ballotNum) +', '+ str(self.log[index].val) + ' to ' + str(channel))
+            # print('sent ack (bal, val) ' + str(self.log[index].ballotNum) +', '+ str(self.log[index].val) + ' to ' + str(channel))
 
     def rcvAck(self, data, channel):
         ballot = data[1]
@@ -185,12 +185,13 @@ class PRM():
                     try:
                         print('received 1KB')
                         data += incomingTCP.get(channel).recv(1024).decode().strip()
+                        print
                     except socket.error:
                         continue'''
                 if (self.stopped):
                     break
                 if data != '':
-                    print('waiting == false, waiting counter == 0')
+                    # print('waiting == false, waiting counter == 0')
                     self.waiting = False
                     self.waitingCounter = 0
                 data_split = data.strip().split('&')
@@ -208,7 +209,7 @@ class PRM():
                     else:
                         if (data[0] == 'decide'):
                             if data[3] == str(self.index):
-                                print('received first decide from', channel, 'data:', data[1])
+                                # print('received first decide from', channel, 'data:', data[1])
                                 if self.log[self.index] is None:
                                     self.log.insert(self.index,Paxos(self.index))
                                 self.log[self.index].val = log(data[2],data[1])
@@ -320,7 +321,7 @@ class PRM():
                                                   )
         for out in self.outgoingTCP:
             self.sendMessage(self.outgoingTCP.get(out),msg)
-            print('sent ',msg, 'to ', str(out))
+            # print('sent ',msg, 'to ', str(out))
         self.waiting = True
         #self.receiveMsgs(self.incomingTCP)
 
@@ -330,26 +331,26 @@ class PRM():
             self.accepts_dict[b_key] = 1
         else:
             self.accepts_dict[b_key] += 1
-        print("received accept: (ballot,value) = ",ballot,",",value)
+        # print("received accept: (ballot,value) = ",ballot,",",value)
         if self.log[self.index] is None:
             self.log.insert(self.index,Paxos(self.index))
         if self.compareBallots(ballot,self.log[self.index].ballotNum):
-            print("ballot: ",ballot," is greater than: ", self.log[self.index].ballotNum)
+            # print("ballot: ",ballot," is greater than: ", self.log[self.index].ballotNum)
             self.log[self.index].acceptNum = ballot
             self.log[self.index].val = log(filename,value)
             if self.accepts_dict[b_key] == 1:
                 msg = 'accept|'+b_key+'|'+ str(value) + '|' + filename+ '&'
-                print("from recvAcc, sending accept msg: ",msg)
+                # print("from recvAcc, sending accept msg: ",msg)
                 for id in self.outgoingTCP:
                     self.sendMessage(self.outgoingTCP[id],msg)
                 self.waiting = True
-        print('num for ballot ' + str(b_key) + ':' + str(self.accepts_dict[b_key]) + ' majority: ' + str(self.majority))
+        # print('num for ballot ' + str(b_key) + ':' + str(self.accepts_dict[b_key]) + ' majority: ' + str(self.majority))
         if self.accepts_dict[b_key] == self.majority:
             self.decide()
         print("DONE WITH RECVACCEPT")
 
     def decide(self):
-        print("deciding on value: ",self.log[self.index].val)
+        print("deciding")
         msg = "decide|" + str(self.log[self.index].val.file)+'|'\
               +self.log[self.index].val.filename + '|'+ str(self.index)+ '&'
         num_othersites = len(self.sites) - 1
@@ -361,7 +362,7 @@ class PRM():
             time.sleep(1)
             self.receiveMsgs(self.incomingTCP)
         self.reset()
-        print("RESETED")
+        print("RESET")
         self.sendSuccessToCLI()
 
     def send_dack(self,channel):
@@ -377,7 +378,6 @@ class PRM():
         self.rcvdDacks = {}
 
 
-
     def replicate(self,filename):
         print("replicating")
         logobj = log(filename)
@@ -390,10 +390,10 @@ class PRM():
         #turn these guys to dicts
         dict2 = self.log[pos2].val.file
         if(isinstance(dict1,str)):
-            print('dict 1 was a string')
+            # print('dict 1 was a string')
             dict1 = self.strToDict(dict1)
         if(isinstance(dict2,str)):
-            print('dict 2 was a string')
+            # print('dict 2 was a string')
             dict2 = self.strToDict(dict2)
         for key in dict1:
             if key not in combined_dict:
@@ -414,10 +414,10 @@ class PRM():
         dict1 = self.log[pos1].val.file
         dict2 = self.log[pos2].val.file
         if (isinstance(dict1, str)):
-            print('dict 1 was a string')
+            # print('dict 1 was a string')
             dict1 = self.strToDict(dict1)
         if (isinstance(dict2, str)):
-            print('dict 2 was a string')
+            # print('dict 2 was a string')
             dict2 = self.strToDict(dict2)
         for key in dict1:
             total += dict1[key]

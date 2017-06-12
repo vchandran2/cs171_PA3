@@ -60,7 +60,7 @@ class Reducer():
         for word in self.word_dict:
             line = word+", "+str(self.word_dict[word])+"\n"
             newfile.write(line)
-        print('reduced file: ', newfilename)
+        # print('reduced file: ', newfilename)
         newfile.close()
 
     def stripWord(self, word):
@@ -71,7 +71,7 @@ class Reducer():
         return newWord
 
     def reduce(self,filenames):
-        print('starting to reduce')
+        # print('starting to reduce')
         self.extract(filenames)
         self.writeToFile(filenames)
         self.word_dict = {}
