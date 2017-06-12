@@ -391,10 +391,10 @@ class PRM():
         dict2 = self.log[pos2].val.file
         if(isinstance(dict1,str)):
             print('dict 1 was a string')
-            self.strToDict(dict1)
+            dict1 = self.strToDict(dict1)
         if(isinstance(dict2,str)):
             print('dict 2 was a string')
-            self.strToDict(dict2)
+            dict2 = self.strToDict(dict2)
         for key in dict1:
             if key not in combined_dict:
                 combined_dict[key] = dict1[key]
@@ -415,10 +415,10 @@ class PRM():
         dict2 = self.log[pos2].val.file
         if (isinstance(dict1, str)):
             print('dict 1 was a string')
-            self.strToDict(dict1)
+            dict1 = self.strToDict(dict1)
         if (isinstance(dict2, str)):
             print('dict 2 was a string')
-            self.strToDict(dict2)
+            dict2 = self.strToDict(dict2)
         for key in dict1:
             total += dict1[key]
         for key in dict2:
