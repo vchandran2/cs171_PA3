@@ -171,6 +171,7 @@ class PRM():
                 data = data.strip()
                 while data[-1] != '&': # if last char in string does not equal & recv again
                     try:
+                        print('received 1KB')
                         data += incomingTCP.get(channel).recv(1024).decode().strip()
                     except socket.error:
                         continue
