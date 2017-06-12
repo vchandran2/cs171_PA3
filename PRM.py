@@ -34,6 +34,7 @@ class PRM():
         sent = 0
         while sent < filesize:
             sent += sock.send(msg,1024)
+            msg = msg[sent:]
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
