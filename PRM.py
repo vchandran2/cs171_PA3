@@ -28,6 +28,13 @@ class PRM():
         self.waitingCounter = 0
         self.waiting = False
 
+    def sendMessage(self,sock,msg):
+        msg = msg.encode()
+        filesize = len(msg)
+        sent = 0
+        while sent < filesize:
+            sent += sock.send(msg,1024)
+
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
         index = int(data[2])
@@ -42,21 +49,21 @@ class PRM():
             self.index = index
             self.log[index].ballotNum = ballotRcvd
             if(self.log[index].val is None):
-                self.outgoingTCP.get(channel).sendall(str('ack|'
+                self.sendMessage(self.outgoingTCP.get(channel),str('ack|'
                                                       + str(self.log[index].ballotNum) + '|'
                                                       + str(self.log[index].acceptNum) + '|'
                                                       + str(self.log[index].val)       + '|' #bug will probably happen
                                                       + str(index)
-                                                      +'&').encode())
+                                                      +'&'))
             else:
-                self.outgoingTCP.get(channel).sendall(str('ack|'
+                self.sendMessage(self.outgoingTCP.get(channel), str('ack|'
                                                           + str(self.log[index].ballotNum) + '|'
                                                           + str(self.log[index].acceptNum) + '|'
                                                           + str(self.log[index].val) + '|'  # bug will probably happen
                                                           + str(index) + '|'
                                                           + str(self.log[index].val.filename) + '|'
                                                           + str(self.log[index].val.file)
-                                                          + '&').encode())
+                                                          + '&'))
             self.waiting = True
             print('sent ack (bal, val) ' + str(self.log[index].ballotNum) +', '+ str(self.log[index].val) + ' to ' + str(channel))
 
@@ -94,7 +101,7 @@ class PRM():
                 b_key = str(self.log[self.index].ballotNum)
                 self.accepts_dict[b_key] = 1
                 for out in self.outgoingTCP:
-                    self.outgoingTCP.get(out).sendall(msg.encode())
+                    self.sendMessage(self.outgoingTCP.get(out),msg)
                     print('sent '+ msg + ' to ' + str(out))
                 self.waiting = True
 
@@ -114,7 +121,7 @@ class PRM():
         self.waiting = False
         self.waitingCounter = 0
         msg = 'failure&'
-        self.cli_out_s.sendall(msg.encode())
+        self.sendMessage(self.cli_out_s,msg)
 
     def receiveCLI(self):
         #print("receiving from cli")
@@ -161,7 +168,7 @@ class PRM():
     def sendSuccessToCLI(self):
         msg = 'success&'
         print('sending success to CLI')
-        self.cli_out_s.sendall(msg.encode())
+        self.sendMessage(self.cli_out_s,msg)
 
 
     def receiveMsgs(self, incomingTCP):
@@ -307,7 +314,7 @@ class PRM():
                                                   + '&'
                                                   )
         for out in self.outgoingTCP:
-            self.outgoingTCP.get(out).sendall(msg.encode())
+            self.sendMessage(self.outgoingTCP.get(out),msg)
             print('sent ',msg, 'to ', str(out))
         self.waiting = True
         #self.receiveMsgs(self.incomingTCP)
@@ -329,7 +336,7 @@ class PRM():
                 msg = 'accept|'+b_key+'|'+ str(value) + '|' + filename+ '&'
                 print("from recvAcc, sending accept msg: ",msg)
                 for id in self.outgoingTCP:
-                    self.outgoingTCP[id].sendall(msg.encode())
+                    self.sendMessage(self.outgoingTCP[id],msg)
                 self.waiting = True
         print('num for ballot ' + str(b_key) + ':' + str(self.accepts_dict[b_key]) + ' majority: ' + str(self.majority))
         if self.accepts_dict[b_key] == self.majority:
@@ -344,7 +351,7 @@ class PRM():
         self.log[self.index].decided = True
         while len(self.rcvdDacks) != num_othersites:
             for id in self.outgoingTCP:
-                self.outgoingTCP[id].sendall(msg.encode())
+                self.sendMessage(self.outgoingTCP[id],msg)
          #  self.waiting = True
             time.sleep(1)
             self.receiveMsgs(self.incomingTCP)
@@ -355,7 +362,7 @@ class PRM():
     def send_dack(self,channel):
 
         msg = 'dack|'+ str(self.ID) + '&'
-        self.outgoingTCP[channel].sendall(msg.encode())
+        self.sendMessage(self.outgoingTCP[channel],msg)
         # self.waiting = True
 
     def reset(self):
