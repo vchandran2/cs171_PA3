@@ -30,11 +30,12 @@ class PRM():
 
     def sendMessage(self,sock,msg):
         msg = msg.encode()
-        filesize = len(msg)
-        sent = 0
-        while sent < filesize:
-            sent += sock.send(msg,1024)
-            msg = msg[sent:]
+        sock.send(msg)
+        #filesize = len(msg)
+        #sent = 0
+        #while sent < filesize:
+            #sent += sock.send(msg,1024)
+            #msg = msg[sent:]
 
     def rcvPrepare(self, data, channel):
         ballotRcvd = list(map(int, data[1].strip('[]').split(',')))
@@ -175,6 +176,9 @@ class PRM():
     def receiveMsgs(self, incomingTCP):
         for channel in incomingTCP:
             try:
+                data = incomingTCP.get(channel).recv(1000000)
+                data = data.decode()
+                '''
                 data = incomingTCP.get(channel).recv(1024).decode()
                 data = data.strip()
                 while data[-1] != '&': # if last char in string does not equal & recv again
@@ -182,7 +186,7 @@ class PRM():
                         print('received 1KB')
                         data += incomingTCP.get(channel).recv(1024).decode().strip()
                     except socket.error:
-                        continue
+                        continue'''
                 if (self.stopped):
                     break
                 if data != '':
