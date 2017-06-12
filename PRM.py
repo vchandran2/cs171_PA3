@@ -387,7 +387,14 @@ class PRM():
     def merge(self,pos1,pos2):
         combined_dict = {}
         dict1 = self.log[pos1].val.file
+        #turn these guys to dicts
         dict2 = self.log[pos2].val.file
+        if(isinstance(dict1,str)):
+            print('dict 1 was a string')
+            self.strToDict(dict1)
+        if(isinstance(dict2,str)):
+            print('dict 2 was a string')
+            self.strToDict(dict2)
         for key in dict1:
             if key not in combined_dict:
                 combined_dict[key] = dict1[key]
@@ -406,6 +413,12 @@ class PRM():
         total = 0
         dict1 = self.log[pos1].val.file
         dict2 = self.log[pos2].val.file
+        if (isinstance(dict1, str)):
+            print('dict 1 was a string')
+            self.strToDict(dict1)
+        if (isinstance(dict2, str)):
+            print('dict 2 was a string')
+            self.strToDict(dict2)
         for key in dict1:
             total += dict1[key]
         for key in dict2:
