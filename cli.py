@@ -2,7 +2,8 @@ import socket
 import time
 import os
 
-IP = '127.0.0.1' # IP of the SITE
+#IP = '127.0.0.1' # IP of the SITE
+
 class cli:
     def __init__(self,ID):
         self.mapsockets = []                # list of outgoing sockets to mappers
@@ -10,10 +11,19 @@ class cli:
         self.prm_socket_out = None                # outgoing socket to prm
         self.prm_socket_in = None
         self.ID = ID                          # can be generalized with an argument. for now, this only works for one CLI
+        f = open('setup.txt', 'r')
+        numProc = int(f.readline().strip())
+        sites = {}
+        for i in range(numProc):
+            sites[i + 1] = f.readline().strip().split()
+        print(sites)
+        TCP = sites.get(ID)
+        print(TCP)
+        self.IP = TCP[0]
 
     def setup(self):
-        addr = (IP,6000+self.ID)
-        addr_out = (IP,5000+self.ID)
+        addr = (self.IP,6000+self.ID)
+        addr_out = (self.IP,5000+self.ID)
         print("setting up at: ",addr)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(addr)
@@ -40,14 +50,14 @@ class cli:
 
     def connectToMappers(self):
         addrs = []
-        addrs.append((IP,5010 +self.ID))
-        addrs.append((IP,5020+self.ID))
+        addrs.append((self.IP,5010 +self.ID))
+        addrs.append((self.IP,5020+self.ID))
         for addr_out in addrs:
             n = self.connectTo(addr_out)
             self.mapsockets.append(n)
 
     def connectToReducer(self):
-        addr = ((IP,5100 + self.ID))
+        addr = ((self.IP,5100 + self.ID))
         self.reducer_socket = self.connectTo(addr)
 
     def connectTo(self,addr_out):

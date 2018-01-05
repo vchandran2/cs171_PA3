@@ -273,15 +273,15 @@ class PRM():
                 self.incomingTCP[sender] = conn
             line = f.readline()
         # practicing just sending message from ID 1 to all others
-        self.setupCLI(s)
+        self.setupCLI(s, TCP_IP)
         print("receiving all")
         self.majority = (len(self.sites) // 2) + 1
         while True:
             self.receiveAll()
             time.sleep(0.5)
 
-    def setupCLI(self,serversock):
-        cli_addr = (IP_local,6000+self.ID)
+    def setupCLI(self,serversock, TCP_IP):
+        cli_addr = (TCP_IP,6000+self.ID)
         print("setting up cli on addr: ", cli_addr)
         n = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while True:
