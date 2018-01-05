@@ -11,7 +11,7 @@ def main():
     sites = {}
     for i in range(numProc):
         sites[i + 1] = f.readline().strip().split()
-    TCP = self.sites.get(ID)
+    TCP = sites.get(ID)
     TCP_IP = TCP[0]
     portnum = 5100 + ID
     REDUCER = Reducer(TCP_IP, portnum, ID)

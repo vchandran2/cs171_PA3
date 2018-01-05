@@ -12,7 +12,7 @@ def main():
     sites = {}
     for i in range(numProc):
         sites[i + 1] = f.readline().strip().split()
-    TCP = self.sites.get(num)
+    TCP = sites.get(int(num))
     TCP_IP = TCP[0]
     portnum = 5000 + ID # id is a two digit number
     MAPPER = Mapper(TCP_IP,portnum,ID)
